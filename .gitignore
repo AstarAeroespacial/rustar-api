@@ -1,0 +1,20 @@
+# LaTeX build artifacts
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.synctex.gz
+*.toc
+*.out
+*.pdf
+
+# Added by cargo
+**/target
+**/Cargo.lock
+
+.env
+
+# local development database
+.data
