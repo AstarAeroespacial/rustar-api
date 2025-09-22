@@ -16,5 +16,7 @@
 
 .env
 
-# local development database
+# local development data
 .data
+mosquitto/data/*
+mosquitto/log/*

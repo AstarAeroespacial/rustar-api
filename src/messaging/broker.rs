@@ -11,6 +11,7 @@ impl MqttBroker {
         let client_id = format!("rustar-api-{}", Uuid::new_v4());
         let mut options = MqttOptions::new(client_id, host, port);
         options.set_keep_alive(keep_alive);
+        println!("connecting to {}{}", host, port);
 
         let (client, eventloop) = AsyncClient::new(options, 10);
 
