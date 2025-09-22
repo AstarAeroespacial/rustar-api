@@ -33,11 +33,6 @@ services:
       - "8888:1883"
     networks:
       - rustar_api_net
-    # healthcheck:
-    #   test: ["CMD-SHELL", "timeout 2 bash -lc '</dev/tcp/localhost/1883' || exit 1"]
-    #   interval: 5s
-    #   timeout: 3s
-    #   retries: 10
   api:
     build:
       context: .
