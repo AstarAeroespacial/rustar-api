@@ -1,0 +1,53 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT id, timestamp, temperature, voltage, current, battery_level\n            FROM telemetry\n            WHERE timestamp >= $1 AND timestamp <= $2\n            ORDER BY timestamp DESC\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "timestamp",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 2,
+        "name": "temperature",
+        "type_info": "Float4"
+      },
+      {
+        "ordinal": 3,
+        "name": "voltage",
+        "type_info": "Float4"
+      },
+      {
+        "ordinal": 4,
+        "name": "current",
+        "type_info": "Float4"
+      },
+      {
+        "ordinal": 5,
+        "name": "battery_level",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "b18eee61cfd4fccdc9cab90eb0452df35fa454f04901be25f267aa21a87a82b2"
+}

@@ -1,0 +1,54 @@
+name: rustar-api
+
+networks:
+  rustar_api_net:
+    ipam:
+      driver: default
+      config:
+      - subnet: 172.25.125.0/24
+
+services:
+  postgres:
+    image: postgres:15
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: rustar-api
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d rustar-api"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - rustar_api_net
+  mosquitto:
+    image: eclipse-mosquitto:1.6
+    volumes:
+      - ./mosquitto/config:/mosquitto/config
+      - ./mosquitto/data:/mosquitto/data
+      - ./mosquitto/log:/mosquitto/log
+    ports:
+      - "8888:1883"
+    networks:
+      - rustar_api_net
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "9090:9090"
+    networks:
+      - rustar_api_net
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mosquitto:
+        condition: service_started
+    environment:
+      API_SERVER_HOST: 0.0.0.0
+      API_SERVER_PORT: "9090"
+      API_DATABASE_URL: postgresql://postgres:postgres@postgres:5432/rustar-api
+      API_MESSAGE_BROKER_HOST: mosquitto
+      API_MESSAGE_BROKER_PORT: "1883"
