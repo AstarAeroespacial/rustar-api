@@ -1,5 +1,5 @@
 use crate::models::responses::TelemetryResponse;
-use crate::models::telemetry::TelemetryRecord;
+use rustar_types::telemetry::TelemetryRecord;
 use crate::repository::telemetry::TelemetryRepository;
 
 pub struct TelemetryService {

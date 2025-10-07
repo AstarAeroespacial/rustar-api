@@ -1,4 +1,5 @@
-use crate::{models::telemetry::TelemetryRecord, services::telemetry_service::TelemetryService};
+use crate::services::telemetry_service::TelemetryService;
+use rustar_types::telemetry::TelemetryRecord;
 use rumqttc::{
     AsyncClient,
     Event::{self, Incoming, Outgoing},

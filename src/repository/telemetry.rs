@@ -1,4 +1,4 @@
-use crate::models::telemetry::TelemetryRecord;
+use rustar_types::telemetry::TelemetryRecord;
 use chrono::Utc;
 use sqlx::{Pool, Postgres};
 
@@ -13,7 +13,7 @@ impl TelemetryRepository {
 
     pub async fn get_latest(
         &self,
-        sat_name: String,
+        _sat_name: String,
         limit: i32,
     ) -> Result<Vec<TelemetryRecord>, Box<dyn std::error::Error + Send + Sync>> {
         let records = sqlx::query_as!(
@@ -34,7 +34,7 @@ impl TelemetryRepository {
 
     pub async fn get_historic(
         &self,
-        sat_name: String,
+        _sat_name: String,
         start_time: Option<i64>,
         end_time: Option<i64>,
     ) -> Result<Vec<TelemetryRecord>, Box<dyn std::error::Error + Send + Sync>> {
