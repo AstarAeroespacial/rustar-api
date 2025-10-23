@@ -15,22 +15,32 @@ use database::create_pool;
 use messaging::{broker::MqttBroker, receiver::MqttReceiver};
 use models::{
     commands::TestMessage,
-    requests::{HistoricTelemetryRequest, LatestTelemetryRequest},
+    requests::{GroundStationCreateRequest, HistoricTelemetryRequest, LatestTelemetryRequest},
     responses::*,
 };
-use repository::telemetry::TelemetryRepository;
+use repository::{ground_station::GroundStationRepository, telemetry::TelemetryRepository};
 use routes::{
     config::get_config,
     control::send_command,
+    ground_stations::create_ground_station,
     telemetry::{get_historic_telemetry, get_latest_telemetry},
 };
-use services::{message_service::MessageService, telemetry_service::TelemetryService};
+use services::{
+    ground_station_service::GroundStationService, message_service::MessageService,
+    telemetry_service::TelemetryService,
+};
 use tokio::signal;
 use tokio::sync::oneshot;
 
 #[derive(OpenApi)]
 #[openapi(
-    paths(routes::telemetry::get_latest_telemetry, routes::telemetry::get_historic_telemetry, routes::config::get_config, routes::control::send_command),
+    paths(
+        routes::telemetry::get_latest_telemetry,
+        routes::telemetry::get_historic_telemetry,
+        routes::config::get_config,
+        routes::control::send_command,
+        routes::ground_stations::create_ground_station,
+    ),
     components(schemas(
         TelemetryResponse,
         ConfigResponse,
@@ -39,7 +49,8 @@ use tokio::sync::oneshot;
         ServerConfig,
         DatabaseConfig,
         MessageBrokerConfig,
-        TestMessage
+        TestMessage,
+        GroundStationCreateRequest
     )),
     tags(
         (name = "API", description = "Main API endpoints"),
@@ -70,10 +81,16 @@ async fn main() -> std::io::Result<()> {
     let pool = create_pool(&shared_config.database.url)
         .await
         .expect("Failed to create database pool");
-
     // Create repository and service
-    let repository = TelemetryRepository::new(pool);
-    let telemetry_service = std::sync::Arc::new(TelemetryService::new(repository));
+    let telemetry_repository = TelemetryRepository::new(pool);
+    let telemetry_service = std::sync::Arc::new(TelemetryService::new(telemetry_repository));
+
+    let pool = create_pool(&shared_config.database.url)
+        .await
+        .expect("Failed to create database pool");
+    let ground_station_repository = GroundStationRepository::new(pool);
+    let ground_station_service =
+        std::sync::Arc::new(GroundStationService::new(ground_station_repository));
 
     let keepalive = std::time::Duration::from_secs(shared_config.message_broker.keep_alive as u64);
     let (broker, eventloop) = MqttBroker::new(
@@ -96,12 +113,13 @@ async fn main() -> std::io::Result<()> {
     println!("  - GET /swagger-ui/ - Swagger UI documentation");
     println!("Server address: {}", server_address);
     println!("============= THIS NEEDS TO BE UPDATED =============");
-    
+
     let server = HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(shared_config.clone()))
             .app_data(web::Data::new(telemetry_service.clone()))
             .app_data(web::Data::new(messaging_service.clone()))
+            .app_data(web::Data::new(ground_station_service.clone()))
             .service(get_latest_telemetry)
             .service(get_historic_telemetry)
             .service(get_config)

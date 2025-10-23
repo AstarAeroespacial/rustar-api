@@ -1,5 +1,4 @@
 use crate::services::telemetry_service::TelemetryService;
-use rustar_types::telemetry::TelemetryRecord;
 use rumqttc::{
     AsyncClient,
     Event::{self, Incoming, Outgoing},
@@ -7,6 +6,7 @@ use rumqttc::{
     Packet::Publish,
     QoS,
 };
+use rustar_types::telemetry::TelemetryRecord;
 use std::{collections::HashMap, sync::Arc, time::Duration};
 use tokio::sync::oneshot;
 use uuid::Uuid;

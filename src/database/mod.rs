@@ -13,16 +13,17 @@ pub async fn create_pool(database_url: &str) -> Result<Pool<Postgres>, sqlx::Err
             Ok(pool) => break pool,
             Err(e) if retries < 3 => {
                 retries += 1;
-                println!("Failed to connect to database (attempt {}): {}. Retrying...", retries, e);
+                println!(
+                    "Failed to connect to database (attempt {}): {}. Retrying...",
+                    retries, e
+                );
                 tokio::time::sleep(std::time::Duration::from_secs(1)).await;
             }
             Err(e) => return Err(e),
         }
     };
-    
-    
-    println!("pool connected");
 
+    println!("pool connected");
 
     // Run migrations
     sqlx::migrate!("./migrations").run(&pool).await?;

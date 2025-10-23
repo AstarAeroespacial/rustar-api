@@ -18,3 +18,14 @@ pub struct LatestTelemetryRequest {
     #[param(example = 10)]
     pub amount: Option<i32>,
 }
+
+#[derive(ToSchema, IntoParams, Debug, Deserialize)]
+#[into_params(style=Form)]
+#[serde(rename_all = "camelCase")]
+pub struct GroundStationCreateRequest {
+    pub id: String,
+    pub name: String,
+    pub latitude: f32,
+    pub longitude: f32,
+    pub altitude: i32,
+}

@@ -1,5 +1,5 @@
-use rustar_types::telemetry::TelemetryRecord;
 use chrono::Utc;
+use rustar_types::telemetry::TelemetryRecord;
 use sqlx::{Pool, Postgres};
 
 pub struct TelemetryRepository {
