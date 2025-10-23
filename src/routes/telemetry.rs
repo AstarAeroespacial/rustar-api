@@ -17,7 +17,7 @@ use std::sync::Arc;
         (status = 400, description = "Bad Request", body = String),
         (status = 500, description = "Internal Server Error", body = String)
     ),
-    tag = "API"
+    tag = "Telemetry"
 )]
 #[get("/api/telemetry/{satellite}/latest")]
 pub async fn get_latest_telemetry(
@@ -56,7 +56,7 @@ pub async fn get_latest_telemetry(
         (status = 400, description = "Bad Request", body = String),
         (status = 500, description = "Internal Server Error", body = String)
     ),
-    tag = "API"
+    tag = "Telemetry"
 )]
 #[get("/api/telemetry/{satellite}/history")]
 pub async fn get_historic_telemetry(

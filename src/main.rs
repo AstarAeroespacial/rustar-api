@@ -35,11 +35,11 @@ use tokio::sync::oneshot;
 #[derive(OpenApi)]
 #[openapi(
     paths(
+        routes::ground_stations::create_ground_station,
         routes::telemetry::get_latest_telemetry,
         routes::telemetry::get_historic_telemetry,
         routes::config::get_config,
         routes::control::send_command,
-        routes::ground_stations::create_ground_station,
     ),
     components(schemas(
         TelemetryResponse,
@@ -53,8 +53,9 @@ use tokio::sync::oneshot;
         GroundStationCreateRequest
     )),
     tags(
-        (name = "API", description = "Main API endpoints"),
-        (name = "Config", description = "Configuration endpoints")
+        (name = "Telemetry", description = "Telemetry endpoints"),
+        (name = "Config", description = "Configuration endpoints"),
+        (name = "Ground Stations", description = "Ground station management")
     ),
     info(
         title = "Rust API with Utoipa",
@@ -124,6 +125,7 @@ async fn main() -> std::io::Result<()> {
             .service(get_historic_telemetry)
             .service(get_config)
             .service(send_command)
+            .service(create_ground_station)
             .wrap(Logger::new("%r - %U | %s (%T)"))
             .service(
                 SwaggerUi::new("/swagger-ui/{_:.*}")

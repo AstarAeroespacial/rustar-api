@@ -12,7 +12,7 @@ impl GroundStationService {
 
     pub async fn create_ground_station(
         &self,
-        ground_station: GroundStation,
+        ground_station: &GroundStation,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         self.repository.create_ground_station(ground_station).await
     }

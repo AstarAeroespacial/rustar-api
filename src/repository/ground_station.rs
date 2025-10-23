@@ -12,7 +12,7 @@ impl GroundStationRepository {
 
     pub async fn create_ground_station(
         &self,
-        ground_station: GroundStation,
+        ground_station: &GroundStation,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         sqlx::query!(
             r#"
