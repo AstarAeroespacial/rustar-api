@@ -16,4 +16,10 @@ impl GroundStationService {
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         self.repository.create_ground_station(ground_station).await
     }
+
+    pub async fn get_all_ground_stations(
+        &self,
+    ) -> Result<Vec<GroundStation>, Box<dyn std::error::Error + Send + Sync>> {
+        self.repository.get_all_ground_stations().await
+    }
 }

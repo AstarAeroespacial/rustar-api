@@ -30,4 +30,16 @@ impl GroundStationRepository {
 
         Ok(())
     }
+
+    pub async fn get_all_ground_stations(
+        &self,
+    ) -> Result<Vec<GroundStation>, Box<dyn std::error::Error + Send + Sync>> {
+        let gss = sqlx::query_as!(
+            GroundStation,
+            r#"SELECT id, name, latitude, longitude, altitude FROM ground_stations"#
+        )
+        .fetch_all(&self.pool)
+        .await?;
+        Ok(gss)
+    }
 }
