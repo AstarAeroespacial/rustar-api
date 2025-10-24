@@ -23,6 +23,9 @@ pub async fn send_command(
     println!("req_body: {:?}", req_body);
     let command = req_body;
     let command_str = serde_json::to_string(&command);
+
+    // TODO: parse to JOB struct, send, add to db, and then subscribe to job topic
+
     match command_str {
         Ok(command_str) => match service.send_message("test-topic", &command_str).await {
             Ok(_) => Ok(actix_web::HttpResponse::Ok().body("Message sent successfully")),

@@ -1,5 +1,4 @@
 use crate::services::telemetry_service::TelemetryService;
-use rustar_types::telemetry::TelemetryRecord;
 use rumqttc::{
     AsyncClient,
     Event::{self, Incoming, Outgoing},
@@ -7,7 +6,7 @@ use rumqttc::{
     Packet::Publish,
     QoS,
 };
-use std::{collections::HashMap, sync::Arc, time::Duration};
+use std::{sync::Arc, time::Duration};
 use tokio::sync::oneshot;
 use uuid::Uuid;
 
@@ -16,6 +15,9 @@ pub struct MqttReceiver {
     eventloop: EventLoop,
     telemetry_service: Arc<TelemetryService>,
 }
+
+// TODO: somehow we should have listeners or handlers or something like the
+// actix/axum handlers, to callback on received topics
 
 impl MqttReceiver {
     #[allow(dead_code)]
@@ -88,6 +90,15 @@ impl MqttReceiver {
         }
     }
 
+    fn subscribe(&self, topic: impl Into<String>, qos: QoS) {
+        todo!()
+    }
+
+    fn unsubscribe(&self, topic: impl Into<String>) {
+        todo!()
+    }
+
+    // TODO: modify this function to handle the arrival of stuff from the ground station
     async fn handle_event(
         &self,
         event: Event,
@@ -100,48 +111,44 @@ impl MqttReceiver {
 
                 if let Publish(msg) = pk {
                     let msg_text = String::from_utf8(msg.payload.to_vec());
-                    match msg_text {
-                        Ok(msg) => {
-                            println!("Message received:{:?}", msg);
 
-                            // Parse the message into a map of key-value pairs, treating everything as a string
-                            let mut map = std::collections::HashMap::new();
-                            for pair in msg.split('|') {
-                                let pair = pair.trim();
-                                if pair.is_empty() {
-                                    continue;
-                                }
-                                if let Some(idx) = pair.find(':') {
-                                    let key = pair[..idx].trim().to_string();
-                                    let value = pair[idx + 1..].trim().to_string();
-                                    map.insert(key, value);
-                                }
-                            }
-                            let msg_type = map.get("type").map(|s| s.as_str()).unwrap_or("unknown");
+                    // find the topic
+                    let parts: Vec<_> = msg.topic.split('/').collect();
 
-                            match msg_type {
+                    // TODO: make safe with .get()
+                    match parts[0] {
+                        "gs" => {
+                            let gs_id = parts[1];
+
+                            todo!("handle whatever the gs send. metrics, logs?")
+                        }
+                        "job" => {
+                            let job_id = parts[1];
+
+                            // TODO: bring the status type from rustar-gs
+                            let status = serde_json::from_slice(&msg.payload).unwrap();
+
+                            todo!("handle the status");
+                        }
+                        "satellite" => {
+                            let sat_id = parts[1];
+
+                            match parts[2] {
                                 "telemetry" => {
-                                    if let Ok(telemetry) = parse_telemetry(map) {
-                                        self.telemetry_service
-                                            .save_telemetry(
-                                                telemetry.timestamp,
-                                                telemetry.temperature,
-                                                telemetry.voltage,
-                                                telemetry.current,
-                                                telemetry.battery_level,
-                                            )
-                                            .await?;
+                                    // TODO: bring telemetry message type from rustar-gs <- or rustar-types
+                                    let frame = serde_json::from_slice(&msg.payload).unwrap();
 
-                                        println!("Telemetry saved: {:?}", telemetry);
-                                    } else {
-                                        eprintln!("Error saving telemetry");
-                                    }
+                                    todo!("handle the frame");
                                 }
-                                _ => println!("Unknown message type. Message: {:?}", map),
+                                _ => {
+                                    unreachable!("wasnt expecting anything else tbh");
+                                }
                             }
                         }
-                        Err(e) => eprintln!("Error converting payload: {:?}", e),
-                    };
+                        _ => {
+                            unreachable!("wasnt expecting something here ¿?");
+                        }
+                    }
                 } else {
                     println!("Incoming event: {:?}", pk)
                 }
@@ -151,36 +158,4 @@ impl MqttReceiver {
 
         Ok(())
     }
-}
-
-fn parse_telemetry(
-    map: HashMap<String, String>,
-) -> Result<TelemetryRecord, Box<dyn std::error::Error + Send + Sync>> {
-    let timestamp = map
-        .get("timestamp")
-        .ok_or("Timestamp not found")?
-        .parse::<i64>()?;
-    let temperature = map
-        .get("temperature")
-        .ok_or("Temperature not found")?
-        .parse::<f32>()?;
-    let voltage = map
-        .get("voltage")
-        .ok_or("Voltage not found")?
-        .parse::<f32>()?;
-    let current = map
-        .get("current")
-        .ok_or("Current not found")?
-        .parse::<f32>()?;
-    let battery_level = map
-        .get("battery_level")
-        .ok_or("Battery level not found")?
-        .parse::<i32>()?;
-    Ok(TelemetryRecord::new(
-        timestamp,
-        temperature,
-        voltage,
-        current,
-        battery_level,
-    ))
 }
