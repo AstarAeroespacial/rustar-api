@@ -10,7 +10,10 @@ impl JobRepository {
         Self { pool }
     }
 
-    pub async fn create_job(&self, job: &Job) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn create_job(
+        &self,
+        job: &Job,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         sqlx::query!(
             r#"
             INSERT INTO jobs (id, gs_id, sat_id, start_time, end_time, commands)

@@ -18,7 +18,9 @@ use models::{
     requests::{GroundStationCreateRequest, HistoricTelemetryRequest, LatestTelemetryRequest},
     responses::*,
 };
-use repository::{ground_station::GroundStationRepository, job::JobRepository, telemetry::TelemetryRepository};
+use repository::{
+    ground_station::GroundStationRepository, job::JobRepository, telemetry::TelemetryRepository,
+};
 use routes::{
     config::get_config,
     control::send_command,
@@ -26,12 +28,12 @@ use routes::{
         create_ground_station, fetch_all_ground_stations, fetch_ground_station,
         set_tle_for_ground_station,
     },
-    telemetry::{get_historic_telemetry, get_latest_telemetry},
     jobs::create_job,
+    telemetry::{get_historic_telemetry, get_latest_telemetry},
 };
 use services::{
-    ground_station_service::GroundStationService, message_service::MessageService,
-    telemetry_service::TelemetryService, job_service::JobService,
+    ground_station_service::GroundStationService, job_service::JobService,
+    message_service::MessageService, telemetry_service::TelemetryService,
 };
 use tokio::signal;
 use tokio::sync::oneshot;

@@ -22,7 +22,10 @@ pub async fn create_job(
 ) -> Result<impl Responder> {
     println!("req_body: {:?}", req_body);
     let req = req_body.into_inner();
-    match service.create_job(&req.gs_id, &req.sat_id, &req.commands).await {
+    match service
+        .create_job(&req.gs_id, &req.sat_id, &req.commands)
+        .await
+    {
         Ok(job) => Ok(actix_web::web::Json(job)),
         Err(e) => {
             error!("Error creating job: {}", e);

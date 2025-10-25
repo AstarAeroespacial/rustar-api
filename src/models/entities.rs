@@ -25,7 +25,6 @@ impl GroundStation {
     }
 }
 
-
 #[derive(Serialize, Deserialize)]
 pub struct Job {
     pub id: String,
@@ -33,7 +32,7 @@ pub struct Job {
     pub sat_id: String,
     pub start_time: i32,
     pub end_time: i32,
-    pub commands: Vec<String>
+    pub commands: Vec<String>,
 }
 
 impl Job {
