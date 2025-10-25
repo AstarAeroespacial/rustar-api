@@ -18,7 +18,7 @@ use models::{
     requests::{GroundStationCreateRequest, HistoricTelemetryRequest, LatestTelemetryRequest},
     responses::*,
 };
-use repository::{ground_station::GroundStationRepository, telemetry::TelemetryRepository};
+use repository::{ground_station::GroundStationRepository, job::JobRepository, telemetry::TelemetryRepository};
 use routes::{
     config::get_config,
     control::send_command,
@@ -27,10 +27,11 @@ use routes::{
         set_tle_for_ground_station,
     },
     telemetry::{get_historic_telemetry, get_latest_telemetry},
+    jobs::create_job,
 };
 use services::{
     ground_station_service::GroundStationService, message_service::MessageService,
-    telemetry_service::TelemetryService,
+    telemetry_service::TelemetryService, job_service::JobService,
 };
 use tokio::signal;
 use tokio::sync::oneshot;
@@ -46,6 +47,7 @@ use tokio::sync::oneshot;
         routes::telemetry::get_historic_telemetry,
         routes::config::get_config,
         routes::control::send_command,
+        routes::jobs::create_job,
     ),
     components(schemas(
         TelemetryResponse,
@@ -61,7 +63,8 @@ use tokio::sync::oneshot;
     tags(
         (name = "Telemetry", description = "Telemetry endpoints"),
         (name = "Config", description = "Configuration endpoints"),
-        (name = "Ground Stations", description = "Ground station management")
+        (name = "Ground Stations", description = "Ground station management"),
+        (name = "Jobs", description = "Job management")
     ),
     info(
         title = "Rust API with Utoipa",
@@ -88,16 +91,16 @@ async fn main() -> std::io::Result<()> {
     let pool = create_pool(&shared_config.database.url)
         .await
         .expect("Failed to create database pool");
-    // Create repository and service
-    let telemetry_repository = TelemetryRepository::new(pool);
+
+    let telemetry_repository = TelemetryRepository::new(pool.clone());
     let telemetry_service = std::sync::Arc::new(TelemetryService::new(telemetry_repository));
 
-    let pool = create_pool(&shared_config.database.url)
-        .await
-        .expect("Failed to create database pool");
-    let ground_station_repository = GroundStationRepository::new(pool);
+    let ground_station_repository = GroundStationRepository::new(pool.clone());
     let ground_station_service =
         std::sync::Arc::new(GroundStationService::new(ground_station_repository));
+
+    let job_repository = JobRepository::new(pool.clone());
+    let job_service = std::sync::Arc::new(JobService::new(job_repository));
 
     let keepalive = std::time::Duration::from_secs(shared_config.message_broker.keep_alive as u64);
     let (broker, eventloop) = MqttBroker::new(
@@ -127,6 +130,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(telemetry_service.clone()))
             .app_data(web::Data::new(messaging_service.clone()))
             .app_data(web::Data::new(ground_station_service.clone()))
+            .app_data(web::Data::new(job_service.clone()))
             .service(get_latest_telemetry)
             .service(get_historic_telemetry)
             .service(get_config)
@@ -135,6 +139,7 @@ async fn main() -> std::io::Result<()> {
             .service(fetch_all_ground_stations)
             .service(fetch_ground_station)
             .service(set_tle_for_ground_station)
+            .service(create_job)
             .wrap(Logger::new("%r - %U | %s (%T)"))
             .service(
                 SwaggerUi::new("/swagger-ui/{_:.*}")

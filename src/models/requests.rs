@@ -29,3 +29,15 @@ pub struct GroundStationCreateRequest {
     pub longitude: f32,
     pub altitude: i32,
 }
+
+#[derive(ToSchema, IntoParams, Debug, Deserialize)]
+#[into_params(style=Form)]
+#[serde(rename_all = "camelCase")]
+pub struct JobCreateRequest {
+    #[param(example = "SAT-01")]
+    pub sat_id: String,
+    #[param(example = "GS-01")]
+    pub gs_id: String,
+    #[param(example = json!(["command1", "command2"]))]
+    pub commands: Vec<String>,
+}
