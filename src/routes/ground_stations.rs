@@ -44,7 +44,7 @@ pub async fn create_ground_station(
 )]
 #[get("/api/ground-stations")]
 pub async fn fetch_all_ground_stations(
-    service: web::Data<Arc<GroundStationService>>
+    service: web::Data<Arc<GroundStationService>>,
 ) -> Result<impl Responder> {
     println!("Fetch ground stations");
     match service.get_all_ground_stations().await {
@@ -74,18 +74,17 @@ pub async fn fetch_all_ground_stations(
 #[get("/api/ground-stations/{id}")]
 pub async fn fetch_ground_station(
     id: web::Path<String>,
-    service: web::Data<Arc<GroundStationService>>
+    service: web::Data<Arc<GroundStationService>>,
 ) -> Result<impl Responder> {
     let id = id.into_inner();
     println!("Fetch ground station {}", id);
     match service.get_ground_station(&id).await {
-        Ok(gs) => {
-            match gs {
-                Some(gs) => Ok(actix_web::web::Json(gs)),
-                None => {
-                    Err(actix_web::error::ErrorNotFound(format!("Ground station {} not found", id)))
-                }
-            }
+        Ok(gs) => match gs {
+            Some(gs) => Ok(actix_web::web::Json(gs)),
+            None => Err(actix_web::error::ErrorNotFound(format!(
+                "Ground station {} not found",
+                id
+            ))),
         },
         Err(e) => {
             error!("Error fetching historic telemetry: {}", e);
@@ -115,17 +114,18 @@ pub async fn fetch_ground_station(
 pub async fn set_tle_for_ground_station(
     id: web::Path<String>,
     req_body: String,
-    service: web::Data<Arc<GroundStationService>>
+    service: web::Data<Arc<GroundStationService>>,
 ) -> Result<impl Responder> {
     let id = id.into_inner();
     let tle = req_body;
     println!("Set TLE for ground station {} to {}", id, tle);
     match service.set_tle_for_ground_station(&id, &tle).await {
-        Ok(r) => {
-            match r {
-                Some(_) => Ok(String::from("TLE set successfully")),
-                None => Err(actix_web::error::ErrorNotFound(format!("Ground station {} not found", id))),
-            }
+        Ok(r) => match r {
+            Some(_) => Ok(String::from("TLE set successfully")),
+            None => Err(actix_web::error::ErrorNotFound(format!(
+                "Ground station {} not found",
+                id
+            ))),
         },
         Err(e) => {
             error!("Error setting TLE for ground station {}: {}", id, e);

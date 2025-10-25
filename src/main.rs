@@ -22,7 +22,10 @@ use repository::{ground_station::GroundStationRepository, telemetry::TelemetryRe
 use routes::{
     config::get_config,
     control::send_command,
-    ground_stations::{create_ground_station, fetch_all_ground_stations, fetch_ground_station, set_tle_for_ground_station},
+    ground_stations::{
+        create_ground_station, fetch_all_ground_stations, fetch_ground_station,
+        set_tle_for_ground_station,
+    },
     telemetry::{get_historic_telemetry, get_latest_telemetry},
 };
 use services::{

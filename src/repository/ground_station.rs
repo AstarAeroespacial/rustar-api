@@ -86,7 +86,7 @@ impl GroundStationRepository {
                 } else {
                     Ok(Some(()))
                 }
-            },
+            }
             Err(e) => Err(e.into()),
         }
     }
