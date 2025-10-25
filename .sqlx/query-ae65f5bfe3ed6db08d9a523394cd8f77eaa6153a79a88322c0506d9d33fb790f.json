@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id, name, latitude, longitude, altitude FROM ground_stations",
+  "query": "SELECT id, name, latitude, longitude, altitude, satellite AS tle FROM ground_stations WHERE id = $1",
   "describe": {
     "columns": [
       {
@@ -27,18 +27,26 @@
         "ordinal": 4,
         "name": "altitude",
         "type_info": "Int4"
+      },
+      {
+        "ordinal": 5,
+        "name": "tle",
+        "type_info": "Text"
       }
     ],
     "parameters": {
-      "Left": []
+      "Left": [
+        "Text"
+      ]
     },
     "nullable": [
       false,
       false,
       false,
       false,
-      false
+      false,
+      true
     ]
   },
-  "hash": "618fd0a6a31eb7d9f46211d5a42ef6f86f49a637cb4ef54088ed56bd40a417d8"
+  "hash": "ae65f5bfe3ed6db08d9a523394cd8f77eaa6153a79a88322c0506d9d33fb790f"
 }

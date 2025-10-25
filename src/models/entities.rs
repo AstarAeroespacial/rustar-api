@@ -8,6 +8,7 @@ pub struct GroundStation {
     pub latitude: f32,
     pub longitude: f32,
     pub altitude: i32,
+    pub tle: Option<String>,
 }
 
 impl GroundStation {
@@ -18,6 +19,7 @@ impl GroundStation {
             latitude: req.latitude,
             longitude: req.longitude,
             altitude: req.altitude,
+            tle: None,
         }
     }
 }

@@ -22,7 +22,7 @@ use repository::{ground_station::GroundStationRepository, telemetry::TelemetryRe
 use routes::{
     config::get_config,
     control::send_command,
-    ground_stations::{create_ground_station, fetch_all_ground_stations},
+    ground_stations::{create_ground_station, fetch_all_ground_stations, fetch_ground_station, set_tle_for_ground_station},
     telemetry::{get_historic_telemetry, get_latest_telemetry},
 };
 use services::{
@@ -37,6 +37,8 @@ use tokio::sync::oneshot;
     paths(
         routes::ground_stations::create_ground_station,
         routes::ground_stations::fetch_all_ground_stations,
+        routes::ground_stations::fetch_ground_station,
+        routes::ground_stations::set_tle_for_ground_station,
         routes::telemetry::get_latest_telemetry,
         routes::telemetry::get_historic_telemetry,
         routes::config::get_config,
@@ -128,6 +130,8 @@ async fn main() -> std::io::Result<()> {
             .service(send_command)
             .service(create_ground_station)
             .service(fetch_all_ground_stations)
+            .service(fetch_ground_station)
+            .service(set_tle_for_ground_station)
             .wrap(Logger::new("%r - %U | %s (%T)"))
             .service(
                 SwaggerUi::new("/swagger-ui/{_:.*}")

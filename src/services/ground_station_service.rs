@@ -22,4 +22,19 @@ impl GroundStationService {
     ) -> Result<Vec<GroundStation>, Box<dyn std::error::Error + Send + Sync>> {
         self.repository.get_all_ground_stations().await
     }
+
+    pub async fn get_ground_station(
+        &self,
+        id: &String,
+    ) -> Result<Option<GroundStation>, Box<dyn std::error::Error + Send + Sync>> {
+        self.repository.get_ground_station(id).await
+    }
+
+    pub async fn set_tle_for_ground_station(
+        &self,
+        id: &String,
+        tle: &String,
+    ) -> Result<Option<()>, Box<dyn std::error::Error + Send + Sync>> {
+        self.repository.set_tle_for_ground_station(id, tle).await
+    }
 }
