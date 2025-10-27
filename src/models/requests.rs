@@ -23,7 +23,7 @@ pub struct LatestTelemetryRequest {
 #[into_params(style=Form)]
 #[serde(rename_all = "camelCase")]
 pub struct GroundStationCreateRequest {
-    pub id: String,
+    pub id: i64,
     pub name: String,
     pub latitude: f32,
     pub longitude: f32,
@@ -34,10 +34,10 @@ pub struct GroundStationCreateRequest {
 #[into_params(style=Form)]
 #[serde(rename_all = "camelCase")]
 pub struct JobCreateRequest {
-    #[param(example = "SAT-01")]
-    pub sat_id: String,
-    #[param(example = "GS-01")]
-    pub gs_id: String,
+    #[param(example = 1)]
+    pub sat_id: i64,
+    #[param(example = 1)]
+    pub gs_id: i64,
     #[param(example = json!(["command1", "command2"]))]
     pub commands: Vec<String>,
 }

@@ -1,14 +1,14 @@
 use crate::models::requests::GroundStationCreateRequest;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 
 #[derive(Serialize, Deserialize)]
 pub struct GroundStation {
-    pub id: String,
+    pub id: i64,
     pub name: String,
-    pub latitude: f32,
-    pub longitude: f32,
-    pub altitude: i32,
+    pub latitude: f64,
+    pub longitude: f64,
+    pub altitude: i64,
     pub tle: Option<String>,
 }
 
@@ -17,33 +17,47 @@ impl GroundStation {
         Self {
             id: req.id,
             name: req.name,
-            latitude: req.latitude,
-            longitude: req.longitude,
-            altitude: req.altitude,
+            latitude: req.latitude as f64,
+            longitude: req.longitude as f64,
+            altitude: req.altitude as i64,
             tle: None,
         }
     }
 }
 
 #[derive(Serialize, Deserialize)]
+pub struct Satellite {
+    pub id: i64,
+    pub name: String,
+    pub tle: String,
+}
+
+#[derive(Serialize, Deserialize)]
 pub struct Job {
-    pub id: String,
-    pub gs_id: String,
-    pub sat_id: String,
+    pub id: i64,
+    pub gs_id: i64,
+    pub sat_id: i64,
     pub start_time: i32,
     pub end_time: i32,
     pub commands: Vec<String>,
 }
 
 impl Job {
-    pub fn new(gs_id: &String, sat_id: &String, commands: &Vec<String>) -> Self {
+    pub fn new(gs_id: &i64, sat_id: &i64, commands: &Vec<String>) -> Self {
         Self {
-            id: Uuid::new_v4().to_string(),
-            gs_id: gs_id.clone(),
-            sat_id: sat_id.clone(),
+            id: 0,
+            gs_id: *gs_id,
+            sat_id: *sat_id,
             start_time: 0,
             end_time: 0,
             commands: commands.clone(),
         }
     }
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct JobStatusUpdate {
+    pub job_id: i64,
+    pub timestamp: DateTime<Utc>,
+    pub status: String,
 }
