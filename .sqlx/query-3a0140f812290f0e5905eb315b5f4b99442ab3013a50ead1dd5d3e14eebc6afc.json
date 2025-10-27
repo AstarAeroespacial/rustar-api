@@ -7,7 +7,20 @@
       "Left": [
         "Int8",
         "Timestamptz",
-        "Text"
+        {
+          "Custom": {
+            "name": "job_status",
+            "kind": {
+              "Enum": [
+                "Sent",
+                "Received",
+                "Started",
+                "Completed",
+                "Error"
+              ]
+            }
+          }
+        }
       ]
     },
     "nullable": []

@@ -1,5 +1,4 @@
-use crate::models::entities::JobStatusUpdate;
-use chrono::{DateTime, Utc};
+use crate::models::entities::{JobStatus, JobStatusUpdate};
 use sqlx::{Pool, Postgres};
 
 pub struct JobStatusUpdateRepository {
@@ -22,7 +21,7 @@ impl JobStatusUpdateRepository {
             "#,
             update.job_id,
             update.timestamp,
-            update.status
+            update.status as JobStatus
         )
         .execute(&self.pool)
         .await?;
@@ -37,7 +36,7 @@ impl JobStatusUpdateRepository {
         let updates = sqlx::query_as!(
             JobStatusUpdate,
             r#"
-            SELECT job_id, timestamp, status
+            SELECT job_id, timestamp, status as "status: JobStatus"
             FROM jobs_status_updates
             WHERE job_id = $1
             ORDER BY timestamp ASC
@@ -57,7 +56,7 @@ impl JobStatusUpdateRepository {
         let query_result = sqlx::query_as!(
             JobStatusUpdate,
             r#"
-            SELECT job_id, timestamp, status
+            SELECT job_id, timestamp, status as "status: JobStatus"
             FROM jobs_status_updates
             WHERE job_id = $1
             ORDER BY timestamp DESC

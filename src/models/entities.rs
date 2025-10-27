@@ -2,6 +2,16 @@ use crate::models::requests::GroundStationCreateRequest;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, sqlx::Type)]
+#[sqlx(type_name = "job_status", rename_all = "PascalCase")]
+pub enum JobStatus {
+    Sent,
+    Received,
+    Started,
+    Completed,
+    Error,
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct GroundStation {
     pub id: i64,
@@ -61,5 +71,5 @@ impl Job {
 pub struct JobStatusUpdate {
     pub job_id: i64,
     pub timestamp: DateTime<Utc>,
-    pub status: String,
+    pub status: JobStatus,
 }
