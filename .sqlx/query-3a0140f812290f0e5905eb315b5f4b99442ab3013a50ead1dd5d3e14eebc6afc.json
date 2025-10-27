@@ -1,0 +1,29 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO jobs_status_updates (job_id, timestamp, status)\n            VALUES ($1, $2, $3)\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Timestamptz",
+        {
+          "Custom": {
+            "name": "job_status",
+            "kind": {
+              "Enum": [
+                "Sent",
+                "Received",
+                "Started",
+                "Completed",
+                "Error"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "3a0140f812290f0e5905eb315b5f4b99442ab3013a50ead1dd5d3e14eebc6afc"
+}

@@ -1,6 +1,5 @@
 use chrono::{Duration, Utc};
 use sqlx::PgPool;
-use uuid::Uuid;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -17,26 +16,26 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut current_time = now - Duration::hours(24);
 
     for i in 0..100 {
-        let telemetry = (
-            Uuid::new_v4().to_string(),
-            current_time.timestamp(),
+        // Create a simple payload (in real scenario this would be encoded telemetry data)
+        let payload = format!(
+            "temp:{},volt:{},curr:{},batt:{}",
             20.0 + (i as f32 * 0.1),  // Varying temperature
             12.0 + (i as f32 * 0.01), // Varying voltage
             1.0 + (i as f32 * 0.005), // Varying current
-            50 + (i % 20),            // Varying battery level
-        );
+            50 + (i % 20)             // Varying battery level
+        )
+        .into_bytes();
 
         sqlx::query!(
             r#"
-            INSERT INTO telemetry (id, timestamp, temperature, voltage, current, battery_level)
-            VALUES ($1, $2, $3, $4, $5, $6)
+            INSERT INTO telemetry (id, timestamp, sat_id, gs_id, payload)
+            VALUES ($1, $2, $3, $4, $5)
             "#,
-            (telemetry.0),
-            (telemetry.1),
-            (telemetry.2),
-            (telemetry.3),
-            (telemetry.4),
-            (telemetry.5)
+            i as i64, // Use sequential IDs
+            current_time,
+            1i64, // Default satellite ID
+            1i64, // Default ground station ID
+            &payload
         )
         .execute(&pool)
         .await?;

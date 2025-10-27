@@ -62,7 +62,7 @@ pub async fn fetch_all_ground_stations(
     get,
     path = "/api/ground-stations/{id}",
     params(
-        ("id" = String, Path, description = "ID of ground station to fetch"),
+        ("id" = i64, Path, description = "ID of ground station to fetch"),
     ),
     responses(
         (status = 200, description = "Success", body = GroundStation),
@@ -73,7 +73,7 @@ pub async fn fetch_all_ground_stations(
 )]
 #[get("/api/ground-stations/{id}")]
 pub async fn fetch_ground_station(
-    id: web::Path<String>,
+    id: web::Path<i64>,
     service: web::Data<Arc<GroundStationService>>,
 ) -> Result<impl Responder> {
     let id = id.into_inner();
@@ -99,7 +99,7 @@ pub async fn fetch_ground_station(
     put,
     path = "/api/ground-stations/{id}/satellite",
     params(
-        ("id" = String, Path, description = "ID of ground station to set satellite for"),
+        ("id" = i64, Path, description = "ID of ground station to set satellite for"),
     ),
     request_body = String,
     responses(
@@ -112,7 +112,7 @@ pub async fn fetch_ground_station(
 )]
 #[put("/api/ground-stations/{id}/satellite")]
 pub async fn set_tle_for_ground_station(
-    id: web::Path<String>,
+    id: web::Path<i64>,
     req_body: String,
     service: web::Data<Arc<GroundStationService>>,
 ) -> Result<impl Responder> {

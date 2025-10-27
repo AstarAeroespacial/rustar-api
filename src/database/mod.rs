@@ -25,8 +25,18 @@ pub async fn create_pool(database_url: &str) -> Result<Pool<Postgres>, sqlx::Err
 
     println!("pool connected");
 
-    // Run migrations
-    sqlx::migrate!("./migrations").run(&pool).await?;
+    // Run migrations (skip if API_SKIP_MIGRATIONS=true)
+    let skip_migrations = std::env::var("API_SKIP_MIGRATIONS")
+        .unwrap_or_default()
+        .to_lowercase();
+
+    if skip_migrations == "true" {
+        println!("Skipping migrations (API_SKIP_MIGRATIONS=true)");
+    } else {
+        println!("Running migrations...");
+        sqlx::migrate!("./migrations").run(&pool).await?;
+        println!("Migrations completed");
+    }
 
     Ok(pool)
 }

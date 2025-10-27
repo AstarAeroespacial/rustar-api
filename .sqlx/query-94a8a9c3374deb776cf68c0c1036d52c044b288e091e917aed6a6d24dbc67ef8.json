@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            UPDATE satellites\n            SET downlink_frequency = $2, uplink_frequency = $3\n            WHERE id = $1\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Float8",
+        "Float8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "94a8a9c3374deb776cf68c0c1036d52c044b288e091e917aed6a6d24dbc67ef8"
+}

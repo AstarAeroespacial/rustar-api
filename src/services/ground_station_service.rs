@@ -25,14 +25,14 @@ impl GroundStationService {
 
     pub async fn get_ground_station(
         &self,
-        id: &String,
+        id: &i64,
     ) -> Result<Option<GroundStation>, Box<dyn std::error::Error + Send + Sync>> {
         self.repository.get_ground_station(id).await
     }
 
     pub async fn set_tle_for_ground_station(
         &self,
-        id: &String,
+        id: &i64,
         tle: &String,
     ) -> Result<Option<()>, Box<dyn std::error::Error + Send + Sync>> {
         self.repository.set_tle_for_ground_station(id, tle).await
