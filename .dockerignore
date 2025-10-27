@@ -1,0 +1,6 @@
+target/
+.env
+.git/
+*.sql
+supabase_schema*.sql
+public_schema_only.sql
