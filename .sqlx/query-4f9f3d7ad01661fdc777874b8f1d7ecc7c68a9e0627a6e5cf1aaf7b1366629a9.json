@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id, name, tle FROM satellites",
+  "query": "\n            SELECT id, name, tle, downlink_frequency, uplink_frequency\n            FROM satellites\n            ",
   "describe": {
     "columns": [
       {
@@ -17,6 +17,16 @@
         "ordinal": 2,
         "name": "tle",
         "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "downlink_frequency",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 4,
+        "name": "uplink_frequency",
+        "type_info": "Float8"
       }
     ],
     "parameters": {
@@ -25,8 +35,10 @@
     "nullable": [
       false,
       false,
+      false,
+      false,
       false
     ]
   },
-  "hash": "6d6f625874bd2da6b9ffd4618e751c7b047d49a5193bffca31596dd1e222eb6c"
+  "hash": "4f9f3d7ad01661fdc777874b8f1d7ecc7c68a9e0627a6e5cf1aaf7b1366629a9"
 }

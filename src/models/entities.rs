@@ -30,6 +30,8 @@ pub struct Satellite {
     pub id: i64,
     pub name: String,
     pub tle: String,
+    pub downlink_frequency: f64,
+    pub uplink_frequency: f64,
 }
 
 #[derive(Serialize, Deserialize)]
