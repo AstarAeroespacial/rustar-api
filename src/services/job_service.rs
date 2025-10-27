@@ -12,8 +12,8 @@ impl JobService {
 
     pub async fn create_job(
         &self,
-        gs_id: &String,
-        sat_id: &String,
+        gs_id: &i64,
+        sat_id: &i64,
         commands: &Vec<String>,
     ) -> Result<Job, Box<dyn std::error::Error + Send + Sync>> {
         // TODO: calculate start - end
