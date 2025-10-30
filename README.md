@@ -340,6 +340,38 @@ docker compose up -d
 -   Check `.env` has correct `API_DATABASE_URL`
 -   For Supabase, ensure password is correct and `?sslmode=require` is included
 
+### Removing sqlx warnings (invalid port number / macro errors)
+
+If you see sqlx macro errors in the editor (for example `invalid port number` or macro expansion failures from `query!`/`query_as!`), it's usually because the language server or `cargo check` can't connect to the configured `DATABASE_URL`. Here are three safe options to remove those warnings:
+
+Use a local PostgreSQL for editor checks (recommended for development)
+
+1. Ensure your local DB is running (Docker Compose is easiest):
+
+```bash
+docker compose up -d postgres
+```
+
+2. Set the local DB URL in your `.env` (example already configured for local dev):
+
+```bash
+# in .env
+DATABASE_URL=postgresql://postgres:postgres@localhost:5433/postgres
+API_DATABASE_URL=postgresql://postgres:postgres@localhost:5433/postgres
+```
+
+3. Prepare the sqlx offline cache (this writes `.sqlx/`):
+
+```bash
+DATABASE_URL="postgresql://postgres:postgres@localhost:5433/postgres" cargo sqlx prepare
+```
+
+4. Run a local check to validate macros:
+
+```bash
+DATABASE_URL="postgresql://postgres:postgres@localhost:5433/postgres" cargo check
+```
+
 ### MQTT Connection Issues
 
 -   Verify Mosquitto is running: `docker compose logs mosquitto`
