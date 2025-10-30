@@ -20,3 +20,5 @@ log = "0.4.27"
 rumqttc = "0.24.0"
 dotenvy = "0.15.7"
 rustar-types = { git = "https://github.com/AstarAeroespacial/rustar-types", version = "0.1.0" }
+validator = { version = "0.18", features = ["derive"] }
+
