@@ -1,4 +1,4 @@
-use crate::models::requests::GroundStationCreateRequest;
+use crate::models::requests::{GroundStationCreateRequest, SatelliteCreateRequest};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
@@ -35,13 +35,25 @@ impl GroundStation {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct Satellite {
     pub id: i64,
     pub name: String,
     pub tle: String,
     pub downlink_frequency: f64,
     pub uplink_frequency: f64,
+}
+
+impl Satellite {
+    pub fn from_request(req: SatelliteCreateRequest) -> Self {
+        Self {
+            id: 0,
+            name: req.name,
+            tle: req.tle,
+            downlink_frequency: req.downlink_frequency,
+            uplink_frequency: req.uplink_frequency,
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize)]
