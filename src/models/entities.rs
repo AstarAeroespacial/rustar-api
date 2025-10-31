@@ -19,18 +19,16 @@ pub struct GroundStation {
     pub latitude: f64,
     pub longitude: f64,
     pub altitude: i64,
-    pub tle: Option<String>,
 }
 
 impl GroundStation {
     pub fn from_request(req: GroundStationCreateRequest) -> Self {
         Self {
-            id: req.id,
+            id: 0,
             name: req.name,
             latitude: req.latitude as f64,
             longitude: req.longitude as f64,
             altitude: req.altitude as i64,
-            tle: None,
         }
     }
 }
