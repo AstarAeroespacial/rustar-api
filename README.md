@@ -263,19 +263,28 @@ sqlx migrate add add_new_column
 # 2. Edit migrations/TIMESTAMP_add_new_column.sql
 # Add your SQL: ALTER TABLE satellites ADD COLUMN status TEXT;
 
-# 3. Test locally
-docker compose build api --no-cache
+# 3. Apply migration locally
+docker compose up -d postgres
+sqlx migrate run --database-url "postgresql://postgres:postgres@localhost:5433/rustar-api"
+
+# 4. If you have new SQL queries in code, update the SQLX cache
+DATABASE_URL="postgresql://postgres:postgres@localhost:5433/rustar-api" cargo sqlx prepare --workspace
+
+# 5. Test with Docker
+docker compose build api
 docker compose up -d
 docker compose logs -f api  # Verify migration ran
 
-# 4. Apply to Supabase
+# 6. Apply to Supabase
 export $(cat .env | grep -v '^#' | xargs)
 ./scripts/apply_migrations_to_supabase.sh
 
-# 5. Commit changes
-git add migrations/
+# 7. Commit changes
+git add migrations/ .sqlx/  # Don't forget .sqlx/ !
 git commit -m "Add new column to satellites table"
 ```
+
+**Note:** For a more detailed workflow when adding new endpoints, see the [Adding New Endpoints and Migrations](#adding-new-endpoints-and-migrations) section below.
 
 ### Exporting Schema from Supabase (Advanced)
 
@@ -289,6 +298,161 @@ If you need to export the current Supabase schema (e.g., to create a fresh local
 ./scripts/extract_public_schema.sh
 
 # Result: public_schema_only.sql
+```
+
+## Adding New Endpoints and Migrations
+
+When you add new endpoints that interact with the database, you need to update the SQLX query cache for Docker builds. This is a **critical step** that many developers forget.
+
+### Complete Workflow: Adding a New Feature
+
+Follow these steps when adding new database-backed endpoints:
+
+#### 1. Create the Migration (if needed)
+
+```bash
+# Create a new migration file
+sqlx migrate add add_your_feature
+
+# Edit the generated file in migrations/TIMESTAMP_add_your_feature.sql
+# Example: ALTER TABLE ground_stations ADD COLUMN description TEXT;
+```
+
+#### 2. Apply Migration Locally
+
+```bash
+# Start local database
+docker compose up -d postgres
+
+# Wait a few seconds for DB to be ready, then apply migrations
+sqlx migrate run --database-url "postgresql://postgres:postgres@localhost:5433/rustar-api"
+```
+
+#### 3. Write Your Code
+
+Create your repository, service, and route handlers:
+
+-   Add queries in `src/repository/your_feature.rs`
+-   Add business logic in `src/services/your_feature_service.rs`
+-   Add HTTP handlers in `src/routes/your_feature.rs`
+-   Register routes and OpenAPI docs in `src/main.rs`
+
+#### 4. Update SQLX Query Cache ⚠️ CRITICAL STEP
+
+**This step is required for Docker builds to work!** The Dockerfile uses `SQLX_OFFLINE=true`, which means it needs pre-compiled query metadata.
+
+```bash
+# Ensure database is running and has latest migrations
+docker compose up -d postgres
+sleep 3
+
+# Regenerate the query cache (creates/updates .sqlx/ directory)
+DATABASE_URL="postgresql://postgres:postgres@localhost:5433/rustar-api" cargo sqlx prepare --workspace
+```
+
+This command will:
+
+-   ✅ Connect to your local database
+-   ✅ Analyze all SQL queries in your code
+-   ✅ Generate type-safe metadata in `.sqlx/` directory
+-   ✅ Allow Docker to build without a database connection
+
+**Important:** Always commit the `.sqlx/` directory to git!
+
+```bash
+git add .sqlx/
+git add src/
+git add migrations/  # if you created new migrations
+git commit -m "Add new feature with database queries"
+```
+
+#### 5. Test Locally (Without Docker)
+
+```bash
+# Run the API directly with cargo
+cargo run --bin api
+
+# Test your endpoints
+curl http://localhost:9090/api/your-endpoint
+```
+
+#### 6. Test with Docker
+
+```bash
+# Rebuild and restart (the .sqlx cache makes this work)
+docker compose down
+docker compose build api
+docker compose up -d
+
+# Check logs
+docker compose logs -f api
+
+# Test endpoints
+curl http://localhost:9090/api/your-endpoint
+```
+
+#### 7. Apply to Supabase (Production)
+
+```bash
+# Export environment variables
+export $(cat .env | grep -v '^#' | xargs)
+
+# Apply migrations to Supabase
+./scripts/apply_migrations_to_supabase.sh
+```
+
+### Common Errors and Solutions
+
+#### ❌ Error: "SQLX_OFFLINE=true but there is no cached data for this query"
+
+**Cause:** You added new SQL queries but didn't regenerate the `.sqlx/` cache.
+
+**Solution:**
+
+```bash
+docker compose up -d postgres
+DATABASE_URL="postgresql://postgres:postgres@localhost:5433/rustar-api" cargo sqlx prepare --workspace
+docker compose build api
+docker compose up -d
+```
+
+#### ❌ Error: "column does not exist" when running `cargo sqlx prepare`
+
+**Cause:** Your local database doesn't have the latest migrations applied.
+
+**Solution:**
+
+```bash
+sqlx migrate run --database-url "postgresql://postgres:postgres@localhost:5433/rustar-api"
+DATABASE_URL="postgresql://postgres:postgres@localhost:5433/rustar-api" cargo sqlx prepare --workspace
+```
+
+#### ❌ Old endpoint still appears in Swagger UI
+
+**Cause:** Docker cached an old image.
+
+**Solution:**
+
+```bash
+docker compose down
+docker compose build api  # Will use new code and .sqlx cache
+docker compose up -d
+```
+
+### Quick Reference
+
+```bash
+# When you add/modify SQL queries:
+docker compose up -d postgres
+DATABASE_URL="postgresql://postgres:postgres@localhost:5433/rustar-api" cargo sqlx prepare --workspace
+git add .sqlx/
+docker compose build api
+docker compose up -d
+
+# When you add migrations:
+sqlx migrate run --database-url "postgresql://postgres:postgres@localhost:5433/rustar-api"
+DATABASE_URL="postgresql://postgres:postgres@localhost:5433/rustar-api" cargo sqlx prepare --workspace
+./scripts/apply_migrations_to_supabase.sh  # For production
 ```
 
 ## Development
