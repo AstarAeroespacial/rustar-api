@@ -1,0 +1,46 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT id, name, latitude, longitude, altitude\n            FROM ground_stations\n            WHERE id = $1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "latitude",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 3,
+        "name": "longitude",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 4,
+        "name": "altitude",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "3838c2cde6633c95e91ec7f46cacc1dbf35e99dd296a21075f53717543741721"
+}
