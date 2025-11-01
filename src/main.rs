@@ -28,10 +28,7 @@ use repository::{
 use routes::{
     config::get_config,
     control::send_command,
-    ground_stations::{
-        create_ground_station, fetch_all_ground_stations, fetch_ground_station,
-        set_tle_for_ground_station,
-    },
+    ground_stations::{create_ground_station, fetch_all_ground_stations, fetch_ground_station},
     jobs::create_job,
     satellites::{
         create_satellite, delete_satellite, fetch_all_satellites, fetch_satellite,
@@ -48,6 +45,8 @@ use std::sync::Arc;
 use tokio::signal;
 use tokio::sync::oneshot;
 
+use crate::routes::ground_stations::delete_ground_station;
+
 #[derive(OpenApi)]
 #[openapi(
     paths(
@@ -55,7 +54,7 @@ use tokio::sync::oneshot;
         routes::ground_stations::create_ground_station,
         routes::ground_stations::fetch_all_ground_stations,
         routes::ground_stations::fetch_ground_station,
-        routes::ground_stations::set_tle_for_ground_station,
+        routes::ground_stations::delete_ground_station,
         // Telemetry
         routes::telemetry::get_latest_telemetry,
         routes::telemetry::get_historic_telemetry,
@@ -153,7 +152,7 @@ async fn main() -> std::io::Result<()> {
     println!("  - GET    /api/ground-stations");
     println!("  - GET    /api/ground-stations/{{id}}");
     println!("  - POST   /api/ground-stations");
-    println!("  - PUT    /api/ground-stations/{{id}}/tle");
+    println!("  - DELETE /api/ground-stations/{{id}}");
     println!("  - GET    /api/satellites");
     println!("  - GET    /api/satellites/{{id}}");
     println!("  - POST   /api/satellites");
@@ -182,7 +181,7 @@ async fn main() -> std::io::Result<()> {
             .service(create_ground_station)
             .service(fetch_all_ground_stations)
             .service(fetch_ground_station)
-            .service(set_tle_for_ground_station)
+            .service(delete_ground_station)
             // Jobs
             .service(create_job)
             // Satellites

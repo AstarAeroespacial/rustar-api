@@ -21,14 +21,24 @@ pub struct LatestTelemetryRequest {
     pub amount: Option<i32>,
 }
 
-#[derive(ToSchema, IntoParams, Debug, Deserialize)]
-#[into_params(style=Form)]
+#[derive(ToSchema, IntoParams, Debug, Deserialize, Validate)]
+#[into_params(style = Form)]
 #[serde(rename_all = "camelCase")]
 pub struct GroundStationCreateRequest {
-    pub id: i64,
+    #[validate(length(min = 1, message = "Name cannot be empty"))]
+    #[schema(example = "Ground Station Buenos Aires")]
     pub name: String,
+
+    #[validate(range(min = -90.0, max = 90.0, message = "Latitude must be between -90 and 90"))]
+    #[schema(example = json!(-34.6037))]
     pub latitude: f32,
+
+    #[validate(range(min = -180.0, max = 180.0, message = "Longitude must be between -180 and 180"))]
+    #[schema(example = json!(-58.3816))]
     pub longitude: f32,
+
+    #[validate(range(min = -500, max = 9000, message = "Altitude must be within realistic range (-500 to 9000 meters)"))]
+    #[schema(example = 25i32)]
     pub altitude: i32,
 }
 

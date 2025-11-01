@@ -1,43 +1,15 @@
-use crate::models::{entities::GroundStation, requests::GroundStationCreateRequest};
-use crate::services::ground_station_service::GroundStationService;
-use actix_web::{get, post, put, web, Responder, Result};
-use log::error;
+use crate::models::entities::GroundStation;
+use crate::models::requests::GroundStationCreateRequest;
+use crate::services::{errors::ServiceError, ground_station_service::GroundStationService};
+use actix_web::{delete, get, post, web, HttpResponse};
 use std::sync::Arc;
-
-#[utoipa::path(
-    post,
-    path = "/api/ground-stations",
-    request_body = GroundStationCreateRequest,
-    responses(
-        (status = 201, description = "Created", body = GroundStation),
-        (status = 400, description = "Bad Request", body = String),
-        (status = 500, description = "Internal Server Error", body = String)
-    ),
-    tag = "Ground Stations"
-)]
-#[post("/api/ground-stations")]
-pub async fn create_ground_station(
-    req_body: web::Json<GroundStationCreateRequest>,
-    service: web::Data<Arc<GroundStationService>>,
-) -> Result<impl Responder> {
-    println!("req_body: {:?}", req_body);
-    let gs = GroundStation::from_request(req_body.into_inner());
-    match service.create_ground_station(&gs).await {
-        Ok(_) => Ok(actix_web::web::Json(gs)),
-        Err(e) => {
-            error!("Error creating ground station: {}", e);
-            Err(actix_web::error::ErrorInternalServerError(
-                "Failed to create ground station",
-            ))
-        }
-    }
-}
+use validator::Validate;
 
 #[utoipa::path(
     get,
     path = "/api/ground-stations",
     responses(
-        (status = 200, description = "Success", body = Vec<GroundStation>),
+        (status = 200, description = "List all ground stations", body = [GroundStation]),
         (status = 500, description = "Internal Server Error", body = String)
     ),
     tag = "Ground Stations"
@@ -45,28 +17,20 @@ pub async fn create_ground_station(
 #[get("/api/ground-stations")]
 pub async fn fetch_all_ground_stations(
     service: web::Data<Arc<GroundStationService>>,
-) -> Result<impl Responder> {
-    println!("Fetch ground stations");
-    match service.get_all_ground_stations().await {
-        Ok(gss) => Ok(actix_web::web::Json(gss)),
-        Err(e) => {
-            error!("Error fetching historic telemetry: {}", e);
-            Err(actix_web::error::ErrorInternalServerError(
-                "Failed to fetch telemetry data",
-            ))
-        }
-    }
+) -> Result<HttpResponse, ServiceError> {
+    let ground_stations = service.get_all_ground_stations().await?;
+    Ok(HttpResponse::Ok().json(ground_stations))
 }
 
 #[utoipa::path(
     get,
     path = "/api/ground-stations/{id}",
     params(
-        ("id" = i64, Path, description = "ID of ground station to fetch"),
+        ("id" = i64, Path, description = "ID of the ground station to fetch")
     ),
     responses(
-        (status = 200, description = "Success", body = GroundStation),
-        (status = 404, description = "Not Found", body = String),
+        (status = 200, description = "Ground station fetched successfully", body = GroundStation),
+        (status = 404, description = "Ground station not found", body = String),
         (status = 500, description = "Internal Server Error", body = String)
     ),
     tag = "Ground Stations"
@@ -75,63 +39,80 @@ pub async fn fetch_all_ground_stations(
 pub async fn fetch_ground_station(
     id: web::Path<i64>,
     service: web::Data<Arc<GroundStationService>>,
-) -> Result<impl Responder> {
+) -> Result<HttpResponse, ServiceError> {
     let id = id.into_inner();
-    println!("Fetch ground station {}", id);
-    match service.get_ground_station(&id).await {
-        Ok(gs) => match gs {
-            Some(gs) => Ok(actix_web::web::Json(gs)),
-            None => Err(actix_web::error::ErrorNotFound(format!(
-                "Ground station {} not found",
-                id
-            ))),
-        },
-        Err(e) => {
-            error!("Error fetching historic telemetry: {}", e);
-            Err(actix_web::error::ErrorInternalServerError(
-                "Failed to fetch telemetry data",
-            ))
-        }
-    }
+    let gs = service
+        .get_ground_station(&id)
+        .await?
+        .ok_or_else(|| ServiceError::NotFound(format!("Ground station {id} not found")))?;
+
+    Ok(HttpResponse::Ok().json(gs))
 }
 
 #[utoipa::path(
-    put,
-    path = "/api/ground-stations/{id}/satellite",
-    params(
-        ("id" = i64, Path, description = "ID of ground station to set satellite for"),
+    post,
+    path = "/api/ground-stations",
+    request_body(
+        content = GroundStationCreateRequest,
+        example = json!({
+            "name": "Ground Station Buenos Aires",
+            "location": {
+                "latitude": -34.6037,
+                "longitude": -58.3816
+            },
+            "description": "Main UBA station for NOAA reception"
+        })
     ),
-    request_body = String,
     responses(
-        (status = 200, description = "Success", body = String),
+        (status = 201, description = "Ground station created successfully", body = GroundStation),
         (status = 400, description = "Bad Request", body = String),
-        (status = 404, description = "Not Found", body = String),
-        (status = 500, description = "Internal Server Error", body = String),
+        (status = 409, description = "Conflict", body = String),
+        (status = 500, description = "Internal Server Error", body = String)
     ),
     tag = "Ground Stations"
 )]
-#[put("/api/ground-stations/{id}/satellite")]
-pub async fn set_tle_for_ground_station(
-    id: web::Path<i64>,
-    req_body: String,
+#[post("/api/ground-stations")]
+pub async fn create_ground_station(
+    req_body: web::Json<GroundStationCreateRequest>,
     service: web::Data<Arc<GroundStationService>>,
-) -> Result<impl Responder> {
+) -> Result<HttpResponse, ServiceError> {
+    let req = req_body.into_inner();
+
+    req.validate()
+        .map_err(|e| ServiceError::BadRequest(e.to_string()))?;
+
+    let gs = GroundStation::from_request(req);
+    let created = service.create_ground_station(&gs).await?;
+
+    Ok(HttpResponse::Created().json(created))
+}
+
+#[utoipa::path(
+    delete,
+    path = "/api/ground-stations/{id}",
+    params(
+        ("id" = i64, Path, description = "ID of the ground station to delete")
+    ),
+    responses(
+        (status = 204, description = "Ground station deleted successfully, no content returned"),
+        (status = 404, description = "Ground station not found", body = String),
+        (status = 500, description = "Internal Server Error", body = String)
+    ),
+    tag = "Ground Stations"
+)]
+#[delete("/api/ground-stations/{id}")]
+pub async fn delete_ground_station(
+    id: web::Path<i64>,
+    service: web::Data<Arc<GroundStationService>>,
+) -> Result<HttpResponse, ServiceError> {
     let id = id.into_inner();
-    let tle = req_body;
-    println!("Set TLE for ground station {} to {}", id, tle);
-    match service.set_tle_for_ground_station(&id, &tle).await {
-        Ok(r) => match r {
-            Some(_) => Ok(String::from("TLE set successfully")),
-            None => Err(actix_web::error::ErrorNotFound(format!(
-                "Ground station {} not found",
-                id
-            ))),
-        },
-        Err(e) => {
-            error!("Error setting TLE for ground station {}: {}", id, e);
-            Err(actix_web::error::ErrorInternalServerError(
-                "Failed to set TLE for ground station",
-            ))
-        }
+    let deleted = service.delete_ground_station(&id).await?;
+
+    if deleted {
+        Ok(HttpResponse::NoContent().finish()) // 204 No Content
+    } else {
+        Err(ServiceError::NotFound(format!(
+            "Ground station {id} not found"
+        )))
     }
 }
