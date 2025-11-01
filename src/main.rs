@@ -34,7 +34,7 @@ use routes::{
         create_satellite, delete_satellite, fetch_all_satellites, fetch_satellite,
         update_satellite_tle,
     },
-    telemetry::{get_historic_telemetry, get_latest_telemetry},
+    telemetry::fetch_satellite_telemetry,
 };
 use services::{
     ground_station_service::GroundStationService, job_service::JobService,
@@ -56,8 +56,7 @@ use crate::routes::ground_stations::delete_ground_station;
         routes::ground_stations::fetch_ground_station,
         routes::ground_stations::delete_ground_station,
         // Telemetry
-        routes::telemetry::get_latest_telemetry,
-        routes::telemetry::get_historic_telemetry,
+        routes::telemetry::fetch_satellite_telemetry,
         // Config & Control
         routes::config::get_config,
         routes::control::send_command,
@@ -146,6 +145,7 @@ async fn main() -> std::io::Result<()> {
     println!("Available endpoints:");
     println!("  - GET    /api/telemetry/latest");
     println!("  - GET    /api/telemetry/history");
+    println!("  - GET    /api/satellites/{{id}}/telemetry");
     println!("  - GET    /api/config");
     println!("  - POST   /api/control");
     println!("  - POST   /api/jobs");
@@ -172,8 +172,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(job_service.clone()))
             .app_data(web::Data::new(satellite_service.clone()))
             // Telemetry
-            .service(get_latest_telemetry)
-            .service(get_historic_telemetry)
+            .service(fetch_satellite_telemetry)
             // Config & Control
             .service(get_config)
             .service(send_command)
