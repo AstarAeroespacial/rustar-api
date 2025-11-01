@@ -1,5 +1,6 @@
 use crate::models::responses::TelemetryResponse;
 use crate::repository::telemetry::TelemetryRepository;
+use crate::services::errors::ServiceError;
 use rustar_types::telemetry::TelemetryRecord;
 
 pub struct TelemetryService {
@@ -11,59 +12,41 @@ impl TelemetryService {
         Self { repository }
     }
 
-    pub async fn get_latest_telemetry(
+    /// Get all telemetry for a specific satellite by its ID
+    pub async fn get_telemetry_by_satellite_id(
         &self,
-        sat_name: String,
-        limit: i32,
-    ) -> Result<Vec<TelemetryResponse>, Box<dyn std::error::Error + Send + Sync>> {
-        let records = self.repository.get_latest(sat_name, limit).await?;
-        let responses = records
-            .into_iter()
-            .map(|record| TelemetryResponse {
-                timestamp: record.timestamp,
-                temperature: record.temperature,
-                voltage: record.voltage,
-                current: record.current,
-                battery_level: record.battery_level,
-            })
-            .collect();
-
-        Ok(responses)
-    }
-
-    pub async fn get_historic_telemetry(
-        &self,
-        sat_name: String,
-        start_time: Option<i64>,
-        end_time: Option<i64>,
-    ) -> Result<Vec<TelemetryResponse>, Box<dyn std::error::Error + Send + Sync>> {
-        let records = self
+        satellite_id: &i64,
+    ) -> Result<Vec<TelemetryResponse>, ServiceError> {
+        let telemetry = self
             .repository
-            .get_historic(sat_name, start_time, end_time)
+            .get_telemetry_by_satellite(satellite_id)
             .await?;
-        let responses = records
+
+        // Convert TelemetryDb to TelemetryResponse
+        let responses: Result<Vec<TelemetryResponse>, ServiceError> = telemetry
             .into_iter()
-            .map(|record| TelemetryResponse {
-                timestamp: record.timestamp,
-                temperature: record.temperature,
-                voltage: record.voltage,
-                current: record.current,
-                battery_level: record.battery_level,
+            .map(|db_record| {
+                // Decode the payload bytes to TelemetryRecord
+                let telemetry_record = if let Some(payload_bytes) = db_record.payload {
+                    serde_json::from_slice::<TelemetryRecord>(&payload_bytes)
+                        .map_err(|e| ServiceError::DeserializationError(e.to_string()))?
+                } else {
+                    return Err(ServiceError::DeserializationError(
+                        "Missing telemetry payload".to_string(),
+                    ));
+                };
+
+                // Convert to TelemetryResponse
+                Ok(TelemetryResponse {
+                    timestamp: db_record.timestamp.timestamp(),
+                    temperature: telemetry_record.temperature,
+                    voltage: telemetry_record.voltage,
+                    current: telemetry_record.current,
+                    battery_level: telemetry_record.battery_level,
+                })
             })
             .collect();
 
-        Ok(responses)
-    }
-
-    pub async fn save_telemetry(
-        &self,
-        timestamp: i64,
-        temperature: f32,
-        voltage: f32,
-        current: f32,
-        battery_level: i32,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        let record = TelemetryRecord::new(timestamp, temperature, voltage, current, battery_level);
-        self.repository.save(record).await
+        responses
     }
 }
