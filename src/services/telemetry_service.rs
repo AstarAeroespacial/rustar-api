@@ -12,14 +12,16 @@ impl TelemetryService {
         Self { repository }
     }
 
-    /// Get all telemetry for a specific satellite by its ID
+    /// Get telemetry for a specific satellite by its ID with optional pagination
     pub async fn get_telemetry_by_satellite_id(
         &self,
         satellite_id: &i64,
+        limit: Option<i64>,
+        page: Option<i64>,
     ) -> Result<Vec<TelemetryResponse>, ServiceError> {
         let telemetry = self
             .repository
-            .get_telemetry_by_satellite(satellite_id)
+            .get_telemetry_by_satellite(satellite_id, limit, page)
             .await?;
 
         // Convert TelemetryDb to TelemetryResponse

@@ -16,8 +16,7 @@ use messaging::{broker::MqttBroker, receiver::MqttReceiver};
 use models::{
     commands::TestMessage,
     requests::{
-        GroundStationCreateRequest, HistoricTelemetryRequest, LatestTelemetryRequest,
-        SatelliteCreateRequest, TleUpdateRequest,
+        GroundStationCreateRequest, SatelliteCreateRequest, TelemetryQueryParams, TleUpdateRequest,
     },
     responses::*,
 };
@@ -72,8 +71,7 @@ use crate::routes::ground_stations::delete_ground_station;
     components(schemas(
         TelemetryResponse,
         ConfigResponse,
-        HistoricTelemetryRequest,
-        LatestTelemetryRequest,
+        TelemetryQueryParams,
         ServerConfig,
         DatabaseConfig,
         MessageBrokerConfig,
@@ -143,8 +141,6 @@ async fn main() -> std::io::Result<()> {
 
     println!("============= API SERVER STARTING =============");
     println!("Available endpoints:");
-    println!("  - GET    /api/telemetry/latest");
-    println!("  - GET    /api/telemetry/history");
     println!("  - GET    /api/satellites/{{id}}/telemetry");
     println!("  - GET    /api/config");
     println!("  - POST   /api/control");
