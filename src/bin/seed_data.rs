@@ -1,4 +1,5 @@
 use chrono::{Duration, Utc};
+use rustar_types::telemetry::TelemetryRecord;
 use sqlx::PgPool;
 
 #[tokio::main]
@@ -16,15 +17,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut current_time = now - Duration::hours(24);
 
     for i in 0..100 {
-        // Create a simple payload (in real scenario this would be encoded telemetry data)
-        let payload = format!(
-            "temp:{},volt:{},curr:{},batt:{}",
+        let timestamp = current_time.timestamp();
+
+        // Create TelemetryRecord with varying values
+        let telemetry_record = TelemetryRecord::new(
+            timestamp,
             20.0 + (i as f32 * 0.1),  // Varying temperature
             12.0 + (i as f32 * 0.01), // Varying voltage
             1.0 + (i as f32 * 0.005), // Varying current
-            50 + (i % 20)             // Varying battery level
-        )
-        .into_bytes();
+            50 + (i % 50),            // Varying battery level (50-100%)
+        );
+
+        // Serialize to JSON bytes
+        let payload = serde_json::to_vec(&telemetry_record)?;
 
         sqlx::query!(
             r#"
@@ -40,7 +45,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .execute(&pool)
         .await?;
 
-        current_time += Duration::minutes(15); // 15-minute intervals
+        current_time += Duration::minutes(15);
     }
 
     println!("Successfully seeded database with 100 telemetry records!");

@@ -2,25 +2,6 @@ use serde::Deserialize;
 use utoipa::{IntoParams, ToSchema};
 
 use validator::Validate;
-
-#[derive(ToSchema, IntoParams, Debug, Deserialize)]
-#[into_params(style = Form)]
-#[serde(rename_all = "camelCase")]
-pub struct HistoricTelemetryRequest {
-    #[param(example = 1640995200)]
-    pub start_time: Option<i64>,
-    #[param(example = 1640998800)]
-    pub end_time: Option<i64>,
-}
-
-#[derive(ToSchema, IntoParams, Debug, Deserialize)]
-#[into_params(style = Form)]
-#[serde(rename_all = "camelCase")]
-pub struct LatestTelemetryRequest {
-    #[param(example = 10)]
-    pub amount: Option<i32>,
-}
-
 #[derive(ToSchema, IntoParams, Debug, Deserialize, Validate)]
 #[into_params(style = Form)]
 #[serde(rename_all = "camelCase")]
@@ -86,4 +67,17 @@ pub struct TleUpdateRequest {
         example = "1 33591U 09005A   24305.51234567  .00000020  00000-0  12000-4 0  9993\n2 33591  99.1234 123.4567 0012345 123.4567 234.5678 14.12345678901234"
     )]
     pub tle: String,
+}
+
+#[derive(ToSchema, IntoParams, Debug, Deserialize, Validate)]
+#[into_params(parameter_in = Query)]
+#[serde(rename_all = "camelCase")]
+pub struct TelemetryQueryParams {
+    #[validate(range(min = 1, max = 1000, message = "Limit must be between 1 and 1000"))]
+    #[schema(example = 50)]
+    pub limit: Option<i64>,
+
+    #[validate(range(min = 1, message = "Page must be at least 1"))]
+    #[schema(example = 1)]
+    pub page: Option<i64>,
 }

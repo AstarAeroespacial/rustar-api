@@ -118,27 +118,6 @@ impl MqttReceiver {
                                 }
                             }
                             let msg_type = map.get("type").map(|s| s.as_str()).unwrap_or("unknown");
-
-                            match msg_type {
-                                "telemetry" => {
-                                    if let Ok(telemetry) = parse_telemetry(map) {
-                                        self.telemetry_service
-                                            .save_telemetry(
-                                                telemetry.timestamp,
-                                                telemetry.temperature,
-                                                telemetry.voltage,
-                                                telemetry.current,
-                                                telemetry.battery_level,
-                                            )
-                                            .await?;
-
-                                        println!("Telemetry saved: {:?}", telemetry);
-                                    } else {
-                                        eprintln!("Error saving telemetry");
-                                    }
-                                }
-                                _ => println!("Unknown message type. Message: {:?}", map),
-                            }
                         }
                         Err(e) => eprintln!("Error converting payload: {:?}", e),
                     };

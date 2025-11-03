@@ -14,6 +14,9 @@ pub enum ServiceError {
     /// Resource not found
     NotFound(String),
 
+    /// Deserialization error (e.g. invalid JSON payload)
+    DeserializationError(String),
+
     /// Database or unexpected internal error
     Internal(String),
 }
@@ -24,6 +27,7 @@ impl fmt::Display for ServiceError {
             ServiceError::BadRequest(msg) => write!(f, "Bad request: {}", msg),
             ServiceError::Conflict(msg) => write!(f, "Conflict: {}", msg),
             ServiceError::NotFound(msg) => write!(f, "Not found: {}", msg),
+            ServiceError::DeserializationError(msg) => write!(f, "Deserialization error: {}", msg),
             ServiceError::Internal(msg) => write!(f, "Internal error: {}", msg),
         }
     }
@@ -37,6 +41,9 @@ impl ResponseError for ServiceError {
             ServiceError::BadRequest(msg) => HttpResponse::BadRequest().body(msg.clone()),
             ServiceError::Conflict(msg) => HttpResponse::Conflict().body(msg.clone()),
             ServiceError::NotFound(msg) => HttpResponse::NotFound().body(msg.clone()),
+            ServiceError::DeserializationError(msg) => {
+                HttpResponse::UnprocessableEntity().body(msg.clone())
+            }
             ServiceError::Internal(msg) => HttpResponse::InternalServerError().body(msg.clone()),
         }
     }

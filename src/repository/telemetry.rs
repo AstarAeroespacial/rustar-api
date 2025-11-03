@@ -1,14 +1,15 @@
 use chrono::{DateTime, Utc};
-use rustar_types::telemetry::TelemetryRecord;
 use sqlx::{Pool, Postgres};
 
+use crate::repository::errors::RepositoryError;
+
 #[derive(sqlx::FromRow)]
-struct TelemetryDb {
-    id: i64,
-    timestamp: DateTime<Utc>,
-    sat_id: i64,
-    gs_id: i64,
-    payload: Vec<u8>,
+pub struct TelemetryDb {
+    pub id: i64,
+    pub timestamp: DateTime<Utc>,
+    pub sat_id: i64,
+    pub gs_id: i64,
+    pub payload: Option<Vec<u8>>,
 }
 
 pub struct TelemetryRepository {
@@ -20,77 +21,59 @@ impl TelemetryRepository {
         Self { pool }
     }
 
-    pub async fn get_latest(
+    /// Fetch telemetry records for a specific satellite with optional pagination
+    pub async fn get_telemetry_by_satellite(
         &self,
-        _sat_name: String,
-        limit: i32,
-    ) -> Result<Vec<TelemetryRecord>, Box<dyn std::error::Error + Send + Sync>> {
-        // Note: This needs to be adapted based on TelemetryRecord structure
-        // The database stores raw payload bytes, but TelemetryRecord expects decoded fields
-        // TODO: Implement proper payload decoding
-        let _records = sqlx::query_as::<_, TelemetryDb>(
+        satellite_id: &i64,
+        limit: Option<i64>,
+        page: Option<i64>,
+    ) -> Result<Vec<TelemetryDb>, RepositoryError> {
+        let limit_value = limit.unwrap_or(i64::MAX); // No limit if not provided
+        let page_value = page.unwrap_or(1); // Default to page 1
+        let offset = (page_value - 1) * limit_value;
+
+        // Build query with LIMIT and OFFSET
+        // If limit is not provided (i64::MAX), effectively no limit
+        let query = if limit.is_some() {
             r#"
             SELECT id, timestamp, sat_id, gs_id, payload
             FROM telemetry
+            WHERE sat_id = $1
             ORDER BY timestamp DESC
-            LIMIT $1
-            "#,
-        )
-        .bind(limit as i64)
-        .fetch_all(&self.pool)
-        .await?;
-
-        // For now, return empty vec since we need payload decoding logic
-        // TODO: Decode payload bytes into temperature, voltage, current, battery_level
-        Ok(vec![])
-    }
-
-    pub async fn get_historic(
-        &self,
-        _sat_name: String,
-        start_time: Option<i64>,
-        end_time: Option<i64>,
-    ) -> Result<Vec<TelemetryRecord>, Box<dyn std::error::Error + Send + Sync>> {
-        let start_ts = start_time
-            .map(|ts| DateTime::from_timestamp(ts, 0).unwrap_or_default())
-            .unwrap_or(DateTime::UNIX_EPOCH);
-        let end_ts = end_time
-            .map(|ts| DateTime::from_timestamp(ts, 0).unwrap_or_default())
-            .unwrap_or_else(|| Utc::now());
-
-        let _records = sqlx::query_as::<_, TelemetryDb>(
+            LIMIT $2 OFFSET $3
+            "#
+        } else if page.is_some() {
+            // If only page is provided without limit, use a reasonable default limit
             r#"
             SELECT id, timestamp, sat_id, gs_id, payload
             FROM telemetry
-            WHERE timestamp >= $1 AND timestamp <= $2
+            WHERE sat_id = $1
             ORDER BY timestamp DESC
-            "#,
-        )
-        .bind(start_ts)
-        .bind(end_ts)
-        .fetch_all(&self.pool)
-        .await?;
+            LIMIT 50 OFFSET $3
+            "#
+        } else {
+            // No pagination at all
+            r#"
+            SELECT id, timestamp, sat_id, gs_id, payload
+            FROM telemetry
+            WHERE sat_id = $1
+            ORDER BY timestamp DESC
+            "#
+        };
 
-        // For now, return empty vec since we need payload decoding logic
-        // TODO: Decode payload bytes into temperature, voltage, current, battery_level
-        Ok(vec![])
-    }
+        let mut query_builder = sqlx::query_as::<_, TelemetryDb>(query).bind(satellite_id);
 
-    pub async fn save(
-        &self,
-        _telemetry: TelemetryRecord,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        // TODO: This method needs to be completely rewritten to match the actual DB schema
-        // The DB uses: (id: i64, timestamp: DateTime<Utc>, sat_id: i64, gs_id: i64, payload: bytes)
-        // But TelemetryRecord (from rustar-types) uses different fields
-        //
-        // Required steps:
-        // 1. Encode TelemetryRecord fields into payload bytes
-        // 2. Get sat_id and gs_id from context
-        // 3. Convert timestamp to DateTime<Utc>
-        // 4. Parse/convert id to i64
+        if limit.is_some() {
+            query_builder = query_builder.bind(limit_value).bind(offset);
+        } else if page.is_some() {
+            query_builder = query_builder.bind((page_value - 1) * 50);
+        }
 
-        // For now, this is a no-op stub
-        Ok(())
+        let telemetry = query_builder
+            .fetch_all(&self.pool)
+            .await
+            .map_err(RepositoryError::from)?;
+
+        Ok(telemetry)
     }
 }
