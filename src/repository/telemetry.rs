@@ -21,6 +21,32 @@ impl TelemetryRepository {
         Self { pool }
     }
 
+    /// Insert a new telemetry record into the database
+    pub async fn insert_telemetry(
+        &self,
+        timestamp: DateTime<Utc>,
+        sat_id: &str,
+        gs_id: &str,
+        payload: Vec<u8>,
+    ) -> Result<TelemetryDb, RepositoryError> {
+        let telemetry = sqlx::query_as::<_, TelemetryDb>(
+            r#"
+            INSERT INTO telemetry (timestamp, sat_id, gs_id, payload)
+            VALUES ($1, $2, $3, $4)
+            RETURNING id, timestamp, sat_id, gs_id, payload
+            "#,
+        )
+        .bind(timestamp)
+        .bind(sat_id)
+        .bind(gs_id)
+        .bind(payload)
+        .fetch_one(&self.pool)
+        .await
+        .map_err(RepositoryError::from)?;
+
+        Ok(telemetry)
+    }
+
     /// Fetch telemetry records for a specific satellite with optional pagination
     pub async fn get_telemetry_by_satellite(
         &self,

@@ -6,8 +6,8 @@ use rumqttc::{
     Packet::Publish,
     QoS,
 };
-use rustar_types::telemetry::TelemetryRecord;
-use std::{collections::HashMap, sync::Arc, time::Duration};
+use rustar_types::mqtt::telemetry::TelemetryMessage;
+use std::{sync::Arc, time::Duration};
 use tokio::sync::oneshot;
 use uuid::Uuid;
 
@@ -99,28 +99,34 @@ impl MqttReceiver {
                 println!("Received incoming event: {:?}", pk);
 
                 if let Publish(msg) = pk {
-                    let msg_text = String::from_utf8(msg.payload.to_vec());
-                    match msg_text {
-                        Ok(msg) => {
-                            println!("Message received:{:?}", msg);
+                    let parts: Vec<_> = msg.topic.split('/').collect();
 
-                            // Parse the message into a map of key-value pairs, treating everything as a string
-                            let mut map = std::collections::HashMap::new();
-                            for pair in msg.split('|') {
-                                let pair = pair.trim();
-                                if pair.is_empty() {
-                                    continue;
+                    match parts[0] {
+                        "satellite" => {
+                            let sat_id = parts[1];
+
+                            match parts[2] {
+                                "telemetry" => {
+                                    let telemetry: TelemetryMessage =
+                                        serde_json::from_slice(&msg.payload).unwrap();
+
+                                    self.telemetry_service
+                                        .add_telemetry(
+                                            telemetry.timestamp,
+                                            sat_id,
+                                            &telemetry.ground_station_id,
+                                            telemetry.payload,
+                                        )
+                                        .await
+                                        .unwrap();
                                 }
-                                if let Some(idx) = pair.find(':') {
-                                    let key = pair[..idx].trim().to_string();
-                                    let value = pair[idx + 1..].trim().to_string();
-                                    map.insert(key, value);
-                                }
+                                _ => unimplemented!("not expecting anything here tbh"),
                             }
-                            let msg_type = map.get("type").map(|s| s.as_str()).unwrap_or("unknown");
                         }
-                        Err(e) => eprintln!("Error converting payload: {:?}", e),
-                    };
+                        topic => {
+                            todo!("{}", format!("{} topic handling not yet supported", topic))
+                        }
+                    }
                 } else {
                     println!("Incoming event: {:?}", pk)
                 }
@@ -130,36 +136,4 @@ impl MqttReceiver {
 
         Ok(())
     }
-}
-
-fn parse_telemetry(
-    map: HashMap<String, String>,
-) -> Result<TelemetryRecord, Box<dyn std::error::Error + Send + Sync>> {
-    let timestamp = map
-        .get("timestamp")
-        .ok_or("Timestamp not found")?
-        .parse::<i64>()?;
-    let temperature = map
-        .get("temperature")
-        .ok_or("Temperature not found")?
-        .parse::<f32>()?;
-    let voltage = map
-        .get("voltage")
-        .ok_or("Voltage not found")?
-        .parse::<f32>()?;
-    let current = map
-        .get("current")
-        .ok_or("Current not found")?
-        .parse::<f32>()?;
-    let battery_level = map
-        .get("battery_level")
-        .ok_or("Battery level not found")?
-        .parse::<i32>()?;
-    Ok(TelemetryRecord::new(
-        timestamp,
-        temperature,
-        voltage,
-        current,
-        battery_level,
-    ))
 }
