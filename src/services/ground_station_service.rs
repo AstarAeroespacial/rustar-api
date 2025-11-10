@@ -83,7 +83,7 @@ impl GroundStationService {
     /// Get a ground station by ID
     pub async fn get_ground_station(
         &self,
-        id: &i64,
+        id: &str,
     ) -> Result<Option<GroundStation>, ServiceError> {
         self.repository
             .get_ground_station(id)
@@ -92,7 +92,7 @@ impl GroundStationService {
     }
 
     /// Delete a ground station by id
-    pub async fn delete_ground_station(&self, id: &i64) -> Result<bool, ServiceError> {
+    pub async fn delete_ground_station(&self, id: &str) -> Result<bool, ServiceError> {
         let deleted = self
             .repository
             .delete_ground_station(id)
