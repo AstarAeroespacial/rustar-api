@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use serde::Deserialize;
 use utoipa::{IntoParams, ToSchema};
 
@@ -6,6 +7,8 @@ use validator::Validate;
 #[into_params(style = Form)]
 #[serde(rename_all = "camelCase")]
 pub struct GroundStationCreateRequest {
+    #[validate(length(min = 1, message = "ID cannot be empty"))]
+    pub id: String,
     #[validate(length(min = 1, message = "Name cannot be empty"))]
     #[schema(example = "Ground Station Buenos Aires")]
     pub name: String,
@@ -23,22 +26,35 @@ pub struct GroundStationCreateRequest {
     pub altitude: i32,
 }
 
-#[derive(ToSchema, IntoParams, Debug, Deserialize)]
+#[derive(ToSchema, IntoParams, Debug, Deserialize, Validate)]
 #[into_params(style=Form)]
 #[serde(rename_all = "camelCase")]
 pub struct JobCreateRequest {
+    #[validate(length(min = 1, message = "Satellite ID cannot be empty"))]
     #[param(example = 1)]
-    pub sat_id: i64,
+    pub sat_id: String,
+
+    #[validate(length(min = 1, message = "Ground station ID cannot be empty"))]
     #[param(example = 1)]
-    pub gs_id: i64,
+    pub gs_id: String,
+
+    #[param(example = "2024-10-01T12:00:00Z")]
+    pub start_time: DateTime<Utc>,
+
+    #[param(example = "2024-10-01T12:15:00Z")]
+    pub end_time: DateTime<Utc>,
+
     #[param(example = json!(["command1", "command2"]))]
-    pub commands: Vec<String>,
+    pub commands: Option<Vec<String>>,
 }
 
 #[derive(ToSchema, IntoParams, Debug, Deserialize, Validate)]
 #[into_params(style = Form)]
 #[serde(rename_all = "camelCase")]
 pub struct SatelliteCreateRequest {
+    #[validate(length(min = 1, message = "ID cannot be empty"))]
+    pub id: String,
+
     #[validate(length(min = 1, message = "Name cannot be empty"))]
     #[schema(example = "NOAA 19")]
     pub name: String,

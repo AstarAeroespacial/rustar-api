@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 pub enum JobStatus {
     Sent,
     Received,
+    Scheduled,
     Started,
     Completed,
     Error,
@@ -14,7 +15,7 @@ pub enum JobStatus {
 
 #[derive(Serialize, Deserialize)]
 pub struct GroundStation {
-    pub id: i64,
+    pub id: String,
     pub name: String,
     pub latitude: f64,
     pub longitude: f64,
@@ -24,7 +25,7 @@ pub struct GroundStation {
 impl GroundStation {
     pub fn from_request(req: GroundStationCreateRequest) -> Self {
         Self {
-            id: 0,
+            id: req.id,
             name: req.name,
             latitude: req.latitude as f64,
             longitude: req.longitude as f64,
@@ -35,7 +36,7 @@ impl GroundStation {
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Satellite {
-    pub id: i64,
+    pub id: String,
     pub name: String,
     pub tle: String,
     pub downlink_frequency: f64,
@@ -45,7 +46,7 @@ pub struct Satellite {
 impl Satellite {
     pub fn from_request(req: SatelliteCreateRequest) -> Self {
         Self {
-            id: 0,
+            id: req.id,
             name: req.name,
             tle: req.tle,
             downlink_frequency: req.downlink_frequency,
@@ -57,24 +58,11 @@ impl Satellite {
 #[derive(Serialize, Deserialize)]
 pub struct Job {
     pub id: i64,
-    pub gs_id: i64,
-    pub sat_id: i64,
-    pub start_time: i32,
-    pub end_time: i32,
-    pub commands: Vec<String>,
-}
-
-impl Job {
-    pub fn new(gs_id: &i64, sat_id: &i64, commands: &Vec<String>) -> Self {
-        Self {
-            id: 0,
-            gs_id: *gs_id,
-            sat_id: *sat_id,
-            start_time: 0,
-            end_time: 0,
-            commands: commands.clone(),
-        }
-    }
+    pub sat_id: String,
+    pub gs_id: String,
+    pub start: DateTime<Utc>,
+    pub end: DateTime<Utc>,
+    pub commands: Option<Vec<String>>,
 }
 
 #[derive(Serialize, Deserialize)]
