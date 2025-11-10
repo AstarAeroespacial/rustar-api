@@ -17,6 +17,9 @@ pub enum ServiceError {
     /// Deserialization error (e.g. invalid JSON payload)
     DeserializationError(String),
 
+    /// MQTT/Message broker error
+    MessagingError(String),
+
     /// Database or unexpected internal error
     Internal(String),
 }
@@ -28,6 +31,7 @@ impl fmt::Display for ServiceError {
             ServiceError::Conflict(msg) => write!(f, "Conflict: {}", msg),
             ServiceError::NotFound(msg) => write!(f, "Not found: {}", msg),
             ServiceError::DeserializationError(msg) => write!(f, "Deserialization error: {}", msg),
+            ServiceError::MessagingError(msg) => write!(f, "Messaging error: {}", msg),
             ServiceError::Internal(msg) => write!(f, "Internal error: {}", msg),
         }
     }
@@ -43,6 +47,9 @@ impl ResponseError for ServiceError {
             ServiceError::NotFound(msg) => HttpResponse::NotFound().body(msg.clone()),
             ServiceError::DeserializationError(msg) => {
                 HttpResponse::UnprocessableEntity().body(msg.clone())
+            }
+            ServiceError::MessagingError(msg) => {
+                HttpResponse::InternalServerError().body(msg.clone())
             }
             ServiceError::Internal(msg) => HttpResponse::InternalServerError().body(msg.clone()),
         }
@@ -86,5 +93,11 @@ impl From<crate::repository::errors::RepositoryError> for ServiceError {
                 ServiceError::Internal(msg)
             }
         }
+    }
+}
+
+impl From<rumqttc::ClientError> for ServiceError {
+    fn from(err: rumqttc::ClientError) -> Self {
+        ServiceError::MessagingError(err.to_string())
     }
 }

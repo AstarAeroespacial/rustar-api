@@ -37,7 +37,7 @@ pub async fn fetch_all_satellites(
 )]
 #[get("/api/satellites/{id}")]
 pub async fn fetch_satellite(
-    id: web::Path<i64>,
+    id: web::Path<String>,
     service: web::Data<Arc<SatelliteService>>,
 ) -> Result<HttpResponse, ServiceError> {
     let id = id.into_inner();
@@ -53,7 +53,7 @@ pub async fn fetch_satellite(
     put,
     path = "/api/satellites/{id}/tle",
     params(
-        ("id" = i64, Path, description = "ID of the satellite whose TLE is being updated")
+        ("id" = String, Path, description = "ID of the satellite whose TLE is being updated")
     ),
     request_body(
         content = TleUpdateRequest,
@@ -71,7 +71,7 @@ pub async fn fetch_satellite(
 )]
 #[put("/api/satellites/{id}/tle")]
 pub async fn update_satellite_tle(
-    id: web::Path<i64>,
+    id: web::Path<String>,
     req_body: web::Json<TleUpdateRequest>,
     service: web::Data<Arc<SatelliteService>>,
 ) -> Result<HttpResponse, ServiceError> {
@@ -140,7 +140,7 @@ pub async fn create_satellite(
 )]
 #[delete("/api/satellites/{id}")]
 pub async fn delete_satellite(
-    id: web::Path<i64>,
+    id: web::Path<String>,
     service: web::Data<Arc<SatelliteService>>,
 ) -> Result<HttpResponse, ServiceError> {
     let id = id.into_inner();

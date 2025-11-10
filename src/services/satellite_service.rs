@@ -53,17 +53,23 @@ impl SatelliteService {
     }
 
     /// Get one satellite by ID
-    pub async fn get_satellite(&self, id: &i64) -> Result<Option<Satellite>, ServiceError> {
+    pub async fn get_satellite(&self, id: &str) -> Result<Option<Satellite>, ServiceError> {
         self.repository
             .get_satellite(id)
             .await
             .map_err(ServiceError::from)
     }
 
+    /// Get TLE by satellite ID
+    pub async fn get_tle_by_id(&self, id: &str) -> Result<Option<String>, ServiceError> {
+        let satellite = self.repository.get_satellite(id).await?;
+        Ok(satellite.map(|sat| sat.tle))
+    }
+
     /// Update only the TLE of a satellite
     pub async fn update_satellite_tle(
         &self,
-        id: &i64,
+        id: &str,
         tle: String,
     ) -> Result<Option<Satellite>, ServiceError> {
         if tle.trim().is_empty() {
@@ -93,7 +99,7 @@ impl SatelliteService {
     }
 
     /// Delete a satellite by ID
-    pub async fn delete_satellite(&self, id: &i64) -> Result<bool, ServiceError> {
+    pub async fn delete_satellite(&self, id: &str) -> Result<bool, ServiceError> {
         let result = self.repository.delete_satellite(id).await?;
 
         if result {

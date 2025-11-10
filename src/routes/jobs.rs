@@ -1,15 +1,17 @@
+use crate::models::entities::JobStatus;
 use crate::models::requests::JobCreateRequest;
-use crate::services::job_service::JobService;
-use actix_web::{post, web, Responder, Result};
-use log::error;
+use crate::services::{errors::ServiceError, job_service::JobService};
+use actix_web::{post, web, HttpResponse};
+use chrono::Utc;
 use std::sync::Arc;
+use validator::Validate;
 
 #[utoipa::path(
     post,
     path = "/api/jobs",
     request_body = JobCreateRequest,
     responses(
-        (status = 201, description = "Created", body = Job),
+        (status = 201, description = "Job created successfully", body = Job),
         (status = 400, description = "Bad Request", body = String),
         (status = 500, description = "Internal Server Error", body = String)
     ),
@@ -19,19 +21,33 @@ use std::sync::Arc;
 pub async fn create_job(
     req_body: web::Json<JobCreateRequest>,
     service: web::Data<Arc<JobService>>,
-) -> Result<impl Responder> {
-    println!("req_body: {:?}", req_body);
+) -> Result<HttpResponse, ServiceError> {
     let req = req_body.into_inner();
-    match service
-        .create_job(&req.gs_id, &req.sat_id, &req.commands)
-        .await
-    {
-        Ok(job) => Ok(actix_web::web::Json(job)),
-        Err(e) => {
-            error!("Error creating job: {}", e);
-            Err(actix_web::error::ErrorInternalServerError(
-                "Failed to create job",
-            ))
-        }
-    }
+
+    req.validate()
+        .map_err(|e| ServiceError::BadRequest(e.to_string()))?;
+
+    let commands = if let Some(commands) = req.commands {
+        commands
+    } else {
+        Vec::new()
+    };
+
+    let job = service
+        .create_job(
+            &req.gs_id,
+            &req.sat_id,
+            req.start_time,
+            req.end_time,
+            &commands,
+        )
+        .await?;
+
+    service.send_job(&job).await?;
+
+    service
+        .add_job_status(job.id, JobStatus::Sent, Utc::now())
+        .await?;
+
+    Ok(HttpResponse::Created().json(job))
 }

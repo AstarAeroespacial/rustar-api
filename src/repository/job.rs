@@ -1,4 +1,5 @@
 use crate::models::entities::Job;
+use crate::repository::errors::RepositoryError;
 use chrono::{DateTime, Utc};
 use sqlx::{Pool, Postgres};
 
@@ -13,29 +14,29 @@ impl JobRepository {
 
     pub async fn create_job(
         &self,
-        job: &Job,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        // Convert timestamps from i32 to DateTime
-        let start_dt =
-            DateTime::from_timestamp(job.start_time as i64, 0).unwrap_or_else(|| Utc::now());
-        let end_dt = DateTime::from_timestamp(job.end_time as i64, 0).unwrap_or_else(|| Utc::now());
-
-        // Note: DB schema doesn't have 'commands' column
-        // Commands are stored elsewhere or not persisted
-        sqlx::query!(
+        gs_id: &str,
+        sat_id: &str,
+        start: DateTime<Utc>,
+        end: DateTime<Utc>,
+        commands: &Vec<String>,
+    ) -> Result<Job, RepositoryError> {
+        let job = sqlx::query_as!(
+            Job,
             r#"
-            INSERT INTO jobs (id, sat_id, gs_id, start, "end")
+            INSERT INTO jobs (gs_id, sat_id, start, "end", commands)
             VALUES ($1, $2, $3, $4, $5)
+            RETURNING id, gs_id, sat_id, start as "start!", "end" as "end!", commands
             "#,
-            job.id,
-            job.sat_id,
-            job.gs_id,
-            start_dt,
-            end_dt
+            gs_id,
+            sat_id,
+            start,
+            end,
+            commands
         )
-        .execute(&self.pool)
-        .await?;
+        .fetch_one(&self.pool)
+        .await
+        .map_err(RepositoryError::from)?;
 
-        Ok(())
+        Ok(job)
     }
 }

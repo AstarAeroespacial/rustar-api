@@ -1,4 +1,7 @@
-use crate::services::telemetry_service::TelemetryService;
+use crate::{
+    models::entities::JobStatus,
+    services::{job_service::JobService, telemetry_service::TelemetryService},
+};
 use rumqttc::{
     AsyncClient,
     Event::{self, Incoming, Outgoing},
@@ -6,7 +9,6 @@ use rumqttc::{
     Packet::Publish,
     QoS,
 };
-use rustar_types::mqtt::telemetry::TelemetryMessage;
 use std::{sync::Arc, time::Duration};
 use tokio::sync::oneshot;
 use uuid::Uuid;
@@ -15,6 +17,7 @@ pub struct MqttReceiver {
     client: AsyncClient,
     eventloop: EventLoop,
     telemetry_service: Arc<TelemetryService>,
+    job_service: Arc<JobService>,
 }
 
 impl MqttReceiver {
@@ -24,6 +27,7 @@ impl MqttReceiver {
         port: u16,
         keep_alive: Duration,
         telemetry_service: Arc<TelemetryService>,
+        job_service: Arc<JobService>,
     ) -> Self {
         let client_id = format!("rustar-api-{}", Uuid::new_v4());
         let mut options = MqttOptions::new(client_id, host, port);
@@ -36,6 +40,7 @@ impl MqttReceiver {
             client,
             eventloop,
             telemetry_service,
+            job_service,
         }
     }
 
@@ -43,11 +48,13 @@ impl MqttReceiver {
         client: AsyncClient,
         eventloop: EventLoop,
         telemetry_service: Arc<TelemetryService>,
+        job_service: Arc<JobService>,
     ) -> Self {
         Self {
             client,
             eventloop,
             telemetry_service,
+            job_service,
         }
     }
 
@@ -107,7 +114,7 @@ impl MqttReceiver {
 
                             match parts[2] {
                                 "telemetry" => {
-                                    let telemetry: TelemetryMessage =
+                                    let telemetry: rustar_types::mqtt::telemetry::TelemetryMessage =
                                         serde_json::from_slice(&msg.payload).unwrap();
 
                                     self.telemetry_service
@@ -123,6 +130,21 @@ impl MqttReceiver {
                                 _ => unimplemented!("not expecting anything here tbh"),
                             }
                         }
+                        "job" => {
+                            let job_id = parts[1].parse().unwrap();
+
+                            let status_update: rustar_types::jobs::JobStatusUpdate =
+                                serde_json::from_slice(&msg.payload).unwrap();
+
+                            self.job_service
+                                .add_job_status(
+                                    job_id,
+                                    status_update.status.into(),
+                                    status_update.timestamp,
+                                )
+                                .await
+                                .unwrap()
+                        }
                         topic => {
                             todo!("{}", format!("{} topic handling not yet supported", topic))
                         }
@@ -135,5 +157,17 @@ impl MqttReceiver {
         }
 
         Ok(())
+    }
+}
+
+impl From<rustar_types::jobs::JobStatus> for JobStatus {
+    fn from(value: rustar_types::jobs::JobStatus) -> Self {
+        match value {
+            rustar_types::jobs::JobStatus::Received => JobStatus::Received,
+            rustar_types::jobs::JobStatus::Scheduled => JobStatus::Scheduled,
+            rustar_types::jobs::JobStatus::Started => JobStatus::Started,
+            rustar_types::jobs::JobStatus::Completed => JobStatus::Completed,
+            rustar_types::jobs::JobStatus::Error => JobStatus::Error,
+        }
     }
 }

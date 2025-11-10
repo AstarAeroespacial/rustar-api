@@ -1,4 +1,5 @@
 use crate::models::entities::{JobStatus, JobStatusUpdate};
+use crate::repository::errors::RepositoryError;
 use sqlx::{Pool, Postgres};
 
 pub struct JobStatusUpdateRepository {
@@ -13,7 +14,7 @@ impl JobStatusUpdateRepository {
     pub async fn create_status_update(
         &self,
         update: &JobStatusUpdate,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    ) -> Result<(), RepositoryError> {
         sqlx::query!(
             r#"
             INSERT INTO jobs_status_updates (job_id, timestamp, status)
@@ -24,7 +25,8 @@ impl JobStatusUpdateRepository {
             update.status as JobStatus
         )
         .execute(&self.pool)
-        .await?;
+        .await
+        .map_err(RepositoryError::from)?;
 
         Ok(())
     }
@@ -32,7 +34,7 @@ impl JobStatusUpdateRepository {
     pub async fn get_job_status_updates(
         &self,
         job_id: &i64,
-    ) -> Result<Vec<JobStatusUpdate>, Box<dyn std::error::Error + Send + Sync>> {
+    ) -> Result<Vec<JobStatusUpdate>, RepositoryError> {
         let updates = sqlx::query_as!(
             JobStatusUpdate,
             r#"
@@ -44,7 +46,8 @@ impl JobStatusUpdateRepository {
             job_id
         )
         .fetch_all(&self.pool)
-        .await?;
+        .await
+        .map_err(RepositoryError::from)?;
 
         Ok(updates)
     }
@@ -52,7 +55,7 @@ impl JobStatusUpdateRepository {
     pub async fn get_latest_status(
         &self,
         job_id: &i64,
-    ) -> Result<Option<JobStatusUpdate>, Box<dyn std::error::Error + Send + Sync>> {
+    ) -> Result<Option<JobStatusUpdate>, RepositoryError> {
         let query_result = sqlx::query_as!(
             JobStatusUpdate,
             r#"
@@ -73,7 +76,7 @@ impl JobStatusUpdateRepository {
                 if let sqlx::Error::RowNotFound = e {
                     Ok(None)
                 } else {
-                    Err(e.into())
+                    Err(RepositoryError::from(e))
                 }
             }
         }

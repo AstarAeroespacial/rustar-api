@@ -52,7 +52,7 @@ impl SatelliteRepository {
     }
 
     /// Fetch a single satellite by ID
-    pub async fn get_satellite(&self, id: &i64) -> Result<Option<Satellite>, RepositoryError> {
+    pub async fn get_satellite(&self, id: &str) -> Result<Option<Satellite>, RepositoryError> {
         let satellite = sqlx::query_as!(
             Satellite,
             r#"
@@ -70,7 +70,7 @@ impl SatelliteRepository {
     }
 
     /// Update only the TLE of a satellite
-    pub async fn update_tle(&self, id: &i64, tle: &str) -> Result<bool, RepositoryError> {
+    pub async fn update_tle(&self, id: &str, tle: &str) -> Result<bool, RepositoryError> {
         let result = sqlx::query!(
             r#"
             UPDATE satellites
@@ -88,7 +88,7 @@ impl SatelliteRepository {
     }
 
     /// Delete a satellite by ID
-    pub async fn delete_satellite(&self, id: &i64) -> Result<bool, RepositoryError> {
+    pub async fn delete_satellite(&self, id: &str) -> Result<bool, RepositoryError> {
         let result = sqlx::query!(
             r#"
             DELETE FROM satellites
