@@ -24,12 +24,11 @@ impl JobRepository {
         let mut tx = self.pool.begin().await.map_err(RepositoryError::from)?;
 
         // Insert the job
-        let job = sqlx::query_as!(
-            Job,
+        let job_record = sqlx::query!(
             r#"
             INSERT INTO jobs (gs_id, sat_id, start, "end")
             VALUES ($1, $2, $3, $4)
-            RETURNING id, gs_id, sat_id, start, "end", NULL::text[] as "commands: Option<Vec<String>>"
+            RETURNING id, gs_id, sat_id, start, "end"
             "#,
             gs_id,
             sat_id,
@@ -39,6 +38,15 @@ impl JobRepository {
         .fetch_one(&mut *tx)
         .await
         .map_err(RepositoryError::from)?;
+
+        let job = Job {
+            id: job_record.id,
+            gs_id: job_record.gs_id,
+            sat_id: job_record.sat_id,
+            start: job_record.start,
+            end: job_record.end,
+            commands: Some(commands.clone()),
+        };
 
         // Insert commands
         for command in commands.iter() {
