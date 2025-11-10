@@ -96,8 +96,10 @@ impl JobService {
 
         let mqtt_job = rustar_types::jobs::Job {
             id: job.id as u64,
+
             satellite_id: job.sat_id.clone(),
             start: job.start,
+
             end: job.end,
             tle,
             rx_frequency: satellite.downlink_frequency,
