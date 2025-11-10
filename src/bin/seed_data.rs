@@ -38,8 +38,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             "#,
             i as i64, // Use sequential IDs
             current_time,
-            1i64, // Default satellite ID
-            1i64, // Default ground station ID
+            "ASTAR-001",  // Default satellite ID
+            "GS_BSAS_01", // Default ground station ID
             &payload
         )
         .execute(&pool)
