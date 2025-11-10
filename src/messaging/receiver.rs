@@ -64,11 +64,17 @@ impl MqttReceiver {
     }
 
     pub async fn run(&mut self, mut shutdown: oneshot::Receiver<()>) {
-        if let Err(e) = self.client.subscribe("test-topic", QoS::AtLeastOnce).await {
-            eprintln!("Error subscribing to topic: {:?}", e)
-        } else {
-            println!("Subscribed to topic: test-topic")
-        }
+        // TODO: handle subscribe and unsubscribe from job topics dinamically
+        // when we send a job, we should subscribe to its topic and
+        // when a job is complete we should disconnect from its topic
+        self.client
+            .subscribe("satellite/+/telemetry", QoS::AtLeastOnce)
+            .await
+            .unwrap();
+        self.client
+            .subscribe("job/+", QoS::AtLeastOnce)
+            .await
+            .unwrap();
 
         loop {
             tokio::select! {
