@@ -54,7 +54,7 @@ impl GroundStationRepository {
     /// Fetch a single ground station by ID
     pub async fn get_ground_station(
         &self,
-        id: &i64,
+        id: &str,
     ) -> Result<Option<GroundStation>, RepositoryError> {
         let ground_station = sqlx::query_as!(
             GroundStation,
@@ -73,7 +73,7 @@ impl GroundStationRepository {
     }
 
     /// Delete a ground station by ID
-    pub async fn delete_ground_station(&self, id: &i64) -> Result<bool, RepositoryError> {
+    pub async fn delete_ground_station(&self, id: &str) -> Result<bool, RepositoryError> {
         let result = sqlx::query!(
             r#"
             DELETE FROM ground_stations
