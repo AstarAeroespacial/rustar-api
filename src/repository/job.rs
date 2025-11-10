@@ -20,22 +20,43 @@ impl JobRepository {
         end: DateTime<Utc>,
         commands: &Vec<String>,
     ) -> Result<Job, RepositoryError> {
+        // Start a transaction
+        let mut tx = self.pool.begin().await.map_err(RepositoryError::from)?;
+
+        // Insert the job
         let job = sqlx::query_as!(
             Job,
             r#"
-            INSERT INTO jobs (gs_id, sat_id, start, "end", commands)
-            VALUES ($1, $2, $3, $4, $5)
-            RETURNING id, gs_id, sat_id, start as "start!", "end" as "end!", commands
+            INSERT INTO jobs (gs_id, sat_id, start, "end")
+            VALUES ($1, $2, $3, $4)
+            RETURNING id, gs_id, sat_id, start, "end", NULL::text[] as "commands: Option<Vec<String>>"
             "#,
             gs_id,
             sat_id,
             start,
-            end,
-            commands
+            end
         )
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *tx)
         .await
         .map_err(RepositoryError::from)?;
+
+        // Insert commands
+        for command in commands.iter() {
+            sqlx::query!(
+                r#"
+                INSERT INTO job_commands (job_id, command)
+                VALUES ($1, $2)
+                "#,
+                job.id,
+                command
+            )
+            .execute(&mut *tx)
+            .await
+            .map_err(RepositoryError::from)?;
+        }
+
+        // Commit transaction
+        tx.commit().await.map_err(RepositoryError::from)?;
 
         Ok(job)
     }
