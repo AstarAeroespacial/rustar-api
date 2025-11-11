@@ -4,4 +4,3 @@ build:
 
 run:
   web: ./target/release/rustar-api
-
