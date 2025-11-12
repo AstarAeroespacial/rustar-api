@@ -10,7 +10,7 @@ mod repository;
 mod routes;
 mod services;
 
-use config::{Config, DatabaseConfig, MessageBrokerConfig, ServerConfig};
+use config::{Config, DatabaseConfig, BrokerConfig, ServerConfig};
 use database::create_pool;
 use messaging::{broker::MqttBroker, receiver::MqttReceiver};
 use models::{
@@ -74,7 +74,7 @@ use crate::routes::ground_stations::delete_ground_station;
         TelemetryQueryParams,
         ServerConfig,
         DatabaseConfig,
-        MessageBrokerConfig,
+        BrokerConfig,
         TestMessage,
         GroundStationCreateRequest,
         SatelliteCreateRequest,
@@ -127,10 +127,10 @@ async fn main() -> std::io::Result<()> {
     let satellite_service = Arc::new(SatelliteService::new(satellite_repository));
 
     // Setup MQTT broker & receiver
-    let keepalive = std::time::Duration::from_secs(shared_config.message_broker.keep_alive as u64);
+    let keepalive = std::time::Duration::from_secs(shared_config.broker.keep_alive as u64);
     let (broker, eventloop) = MqttBroker::new(
-        &shared_config.message_broker.host,
-        shared_config.message_broker.port,
+        &shared_config.broker.host,
+        shared_config.broker.port,
         keepalive,
     );
     let client = broker.client();

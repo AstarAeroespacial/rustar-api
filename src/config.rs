@@ -15,7 +15,7 @@ pub struct DatabaseConfig {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, ToSchema)]
-pub struct MessageBrokerConfig {
+pub struct BrokerConfig {
     pub host: String,
     pub port: u16,
     pub keep_alive: u32,
@@ -25,7 +25,7 @@ pub struct MessageBrokerConfig {
 pub struct Config {
     pub server: ServerConfig,
     pub database: DatabaseConfig,
-    pub message_broker: MessageBrokerConfig,
+    pub broker: BrokerConfig,
 }
 
 impl Config {

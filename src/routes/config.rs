@@ -16,7 +16,7 @@ pub async fn get_config(config: web::Data<SharedConfig>) -> Result<impl Responde
     let response = ConfigResponse {
         server: config.server.clone(),
         database: config.database.clone(),
-        message_broker: config.message_broker.clone(),
+        message_broker: config.broker.clone(),
     };
     Ok(actix_web::web::Json(response))
 }
