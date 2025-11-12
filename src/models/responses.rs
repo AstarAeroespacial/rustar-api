@@ -14,5 +14,5 @@ pub struct TelemetryResponse {
 pub struct ConfigResponse {
     pub server: crate::config::ServerConfig,
     pub database: crate::config::DatabaseConfig,
-    pub message_broker: crate::config::MessageBrokerConfig,
+    pub message_broker: crate::config::BrokerConfig,
 }

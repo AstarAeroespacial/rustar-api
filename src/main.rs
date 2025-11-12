@@ -1,4 +1,4 @@
-use actix_web::{middleware::Logger, web, App, HttpServer};
+use actix_web::{middleware::{Logger, NormalizePath, TrailingSlash}, web, App, HttpServer};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
@@ -10,7 +10,7 @@ mod repository;
 mod routes;
 mod services;
 
-use config::{Config, DatabaseConfig, MessageBrokerConfig, ServerConfig};
+use config::{Config, DatabaseConfig, BrokerConfig, ServerConfig};
 use database::create_pool;
 use messaging::{broker::MqttBroker, receiver::MqttReceiver};
 use models::{
@@ -74,7 +74,7 @@ use crate::routes::ground_stations::delete_ground_station;
         TelemetryQueryParams,
         ServerConfig,
         DatabaseConfig,
-        MessageBrokerConfig,
+        BrokerConfig,
         TestMessage,
         GroundStationCreateRequest,
         SatelliteCreateRequest,
@@ -88,9 +88,9 @@ use crate::routes::ground_stations::delete_ground_station;
         (name = "Satellites", description = "Satellite management endpoints")
     ),
     info(
-        title = "Rust API with Utoipa",
+        title = "Rustar API",
         version = "1.0.0",
-        description = "A Rust API with OpenAPI documentation using Utoipa"
+        description = "All-in-one solution for ground station and satellite management"
     )
 )]
 struct ApiDoc;
@@ -127,10 +127,10 @@ async fn main() -> std::io::Result<()> {
     let satellite_service = Arc::new(SatelliteService::new(satellite_repository));
 
     // Setup MQTT broker & receiver
-    let keepalive = std::time::Duration::from_secs(shared_config.message_broker.keep_alive as u64);
+    let keepalive = std::time::Duration::from_secs(shared_config.broker.keep_alive as u64);
     let (broker, eventloop) = MqttBroker::new(
-        &shared_config.message_broker.host,
-        shared_config.message_broker.port,
+        &shared_config.broker.host,
+        shared_config.broker.port,
         keepalive,
     );
     let client = broker.client();
@@ -186,11 +186,12 @@ async fn main() -> std::io::Result<()> {
             .service(update_satellite_tle)
             .service(delete_satellite)
             // Middleware & Docs
-            .wrap(Logger::new("%r - %U | %s (%T)"))
             .service(
                 SwaggerUi::new("/swagger-ui/{_:.*}")
-                    .url("/api-docs/openapi.json", ApiDoc::openapi()),
+                .url("/api-docs/openapi.json", ApiDoc::openapi()),
             )
+            .wrap(Logger::new("%r - %U | %s (%T)"))
+            .wrap(NormalizePath::new(TrailingSlash::Trim))
     })
     .bind(server_address)?;
 
