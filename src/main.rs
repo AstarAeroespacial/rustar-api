@@ -88,9 +88,9 @@ use crate::routes::ground_stations::delete_ground_station;
         (name = "Satellites", description = "Satellite management endpoints")
     ),
     info(
-        title = "Rust API with Utoipa",
+        title = "Rustar API",
         version = "1.0.0",
-        description = "A Rust API with OpenAPI documentation using Utoipa"
+        description = "All-in-one solution for ground station and satellite management"
     )
 )]
 struct ApiDoc;
