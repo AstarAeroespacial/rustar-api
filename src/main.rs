@@ -1,4 +1,4 @@
-use actix_web::{middleware::Logger, web, App, HttpServer};
+use actix_web::{middleware::{Logger, NormalizePath, TrailingSlash}, web, App, HttpServer};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
@@ -186,11 +186,12 @@ async fn main() -> std::io::Result<()> {
             .service(update_satellite_tle)
             .service(delete_satellite)
             // Middleware & Docs
-            .wrap(Logger::new("%r - %U | %s (%T)"))
             .service(
                 SwaggerUi::new("/swagger-ui/{_:.*}")
-                    .url("/api-docs/openapi.json", ApiDoc::openapi()),
+                .url("/api-docs/openapi.json", ApiDoc::openapi()),
             )
+            .wrap(Logger::new("%r - %U | %s (%T)"))
+            .wrap(NormalizePath::new(TrailingSlash::Trim))
     })
     .bind(server_address)?;
 
