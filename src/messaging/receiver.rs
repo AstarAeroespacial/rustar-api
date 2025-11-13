@@ -3,11 +3,12 @@ use crate::{
     services::{job_service::JobService, telemetry_service::TelemetryService},
 };
 use rumqttc::{
+    tokio_rustls::{self, rustls::ClientConfig},
     AsyncClient,
     Event::{self, Incoming, Outgoing},
     EventLoop, MqttOptions,
     Packet::Publish,
-    QoS,
+    QoS, Transport,
 };
 use std::{sync::Arc, time::Duration};
 use tokio::sync::oneshot;
@@ -33,6 +34,18 @@ impl MqttReceiver {
         let mut options = MqttOptions::new(client_id, host, port);
         options.set_keep_alive(keep_alive);
         println!("connecting to broker {}:{}", host, port);
+
+        let mut root_cert_store = tokio_rustls::rustls::RootCertStore::empty();
+        root_cert_store.add_parsable_certificates(
+            rustls_native_certs::load_native_certs().expect("could not load platform certs"),
+        );
+
+        let client_config = ClientConfig::builder()
+            .with_root_certificates(root_cert_store)
+            .with_no_client_auth();
+
+        options.set_transport(Transport::tls_with_config(client_config.into()));
+        options.set_credentials("admin", "Admin123");
 
         let (client, eventloop) = AsyncClient::new(options, 10);
 
@@ -67,6 +80,7 @@ impl MqttReceiver {
         // TODO: handle subscribe and unsubscribe from job topics dinamically
         // when we send a job, we should subscribe to its topic and
         // when a job is complete we should disconnect from its topic
+
         self.client
             .subscribe("satellite/+/telemetry", QoS::AtLeastOnce)
             .await
@@ -83,6 +97,7 @@ impl MqttReceiver {
                     break;
                 }
                 event = self.eventloop.poll() => {
+
                     match event {
                         Ok(notif) => {
                             if let Err(e) = self.handle_event(notif).await {
@@ -105,11 +120,11 @@ impl MqttReceiver {
         &self,
         event: Event,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        println!("Notif: {:?}", event);
+        // println!("Notif: {:?}", event);
 
         match event {
             Incoming(pk) => {
-                println!("Received incoming event: {:?}", pk);
+                // println!("Received incoming event: {:?}", pk);
 
                 if let Publish(msg) = pk {
                     let parts: Vec<_> = msg.topic.split('/').collect();
@@ -123,15 +138,15 @@ impl MqttReceiver {
                                     let telemetry: rustar_types::mqtt::telemetry::TelemetryMessage =
                                         serde_json::from_slice(&msg.payload).unwrap();
 
-                                    self.telemetry_service
+                                    let _ = self
+                                        .telemetry_service
                                         .add_telemetry(
                                             telemetry.timestamp,
                                             sat_id,
                                             &telemetry.ground_station_id,
                                             telemetry.payload,
                                         )
-                                        .await
-                                        .unwrap();
+                                        .await;
                                 }
                                 _ => unimplemented!("not expecting anything here tbh"),
                             }
@@ -139,27 +154,33 @@ impl MqttReceiver {
                         "job" => {
                             let job_id = parts[1].parse().unwrap();
 
-                            let status_update: rustar_types::jobs::JobStatusUpdate =
-                                serde_json::from_slice(&msg.payload).unwrap();
+                            dbg!(&msg.payload);
 
-                            self.job_service
-                                .add_job_status(
-                                    job_id,
-                                    status_update.status.into(),
-                                    status_update.timestamp,
-                                )
-                                .await
-                                .unwrap()
+                            if let Ok(status_update) = serde_json::from_slice::<
+                                rustar_types::jobs::JobStatusUpdate,
+                            >(&msg.payload)
+                            {
+                                let _ = self
+                                    .job_service
+                                    .add_job_status(
+                                        job_id,
+                                        status_update.status.into(),
+                                        status_update.timestamp,
+                                    )
+                                    .await;
+                            }
                         }
                         topic => {
                             todo!("{}", format!("{} topic handling not yet supported", topic))
                         }
                     }
                 } else {
-                    println!("Incoming event: {:?}", pk)
+                    // println!("Incoming event: {:?}", pk)
                 }
             }
-            Outgoing(ev) => println!("Outgoing event: {:?}", ev),
+            Outgoing(ev) => {
+                // println!("Outgoing event: {:?}", ev)
+            }
         }
 
         Ok(())
