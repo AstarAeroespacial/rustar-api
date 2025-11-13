@@ -191,7 +191,7 @@ async fn main() -> std::io::Result<()> {
                 .url("/api-docs/openapi.json", ApiDoc::openapi()),
             )
             .wrap(Logger::new("%r - %U | %s (%T)"))
-            .wrap(NormalizePath::new(TrailingSlash::Trim))
+            // .wrap(NormalizePath::new(TrailingSlash::Trim))
     })
     .bind(server_address)?;
 
