@@ -118,4 +118,9 @@ impl JobService {
         let jobs = self.repository.get_all_jobs().await?;
         Ok(jobs)
     }
+
+    pub async fn get_job(&self, id: i64) -> Result<Option<Job>, ServiceError> {
+        let job = self.repository.get_job(id).await?;
+        Ok(job)
+    }
 }
