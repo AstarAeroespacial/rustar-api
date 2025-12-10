@@ -115,4 +115,51 @@ impl JobRepository {
 
         Ok(jobs)
     }
+
+    pub async fn get_job(&self, id: i64) -> Result<Option<Job>, RepositoryError> {
+        let job_record = sqlx::query!(
+            r#"
+            SELECT id, gs_id, sat_id, start, "end"
+            FROM jobs
+            WHERE id = $1
+            "#,
+            id
+        )
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(RepositoryError::from)?;
+
+        if let Some(record) = job_record {
+            // Fetch commands for the job
+            let command_records = sqlx::query!(
+                r#"
+                SELECT command
+                FROM job_commands
+                WHERE job_id = $1
+                "#,
+                record.id
+            )
+            .fetch_all(&self.pool)
+            .await
+            .map_err(RepositoryError::from)?;
+
+            let commands: Vec<String> = command_records
+                .into_iter()
+                .map(|cmd_record| cmd_record.command)
+                .collect();
+
+            let job = Job {
+                id: record.id,
+                gs_id: record.gs_id,
+                sat_id: record.sat_id,
+                start: record.start,
+                end: record.end,
+                commands: Some(commands),
+            };
+
+            Ok(Some(job))
+        } else {
+            Ok(None)
+        }
+    }
 }
