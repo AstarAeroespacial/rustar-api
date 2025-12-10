@@ -2,7 +2,8 @@ use crate::{
     config::Config,
     services::{
         ground_station_service::GroundStationService, job_service::JobService,
-        satellite_service::SatelliteService, telemetry_service::TelemetryService,
+        pass_service::PassService, satellite_service::SatelliteService,
+        telemetry_service::TelemetryService,
     },
 };
 use std::sync::Arc;
@@ -15,6 +16,7 @@ pub struct AppState {
     pub ground_station_service: Arc<GroundStationService>,
     pub job_service: Arc<JobService>,
     pub satellite_service: Arc<SatelliteService>,
+    pub pass_service: Arc<PassService>,
 }
 
 impl AppState {
@@ -24,6 +26,7 @@ impl AppState {
         ground_station_service: Arc<GroundStationService>,
         job_service: Arc<JobService>,
         satellite_service: Arc<SatelliteService>,
+        pass_service: Arc<PassService>,
     ) -> Self {
         Self {
             config,
@@ -31,6 +34,7 @@ impl AppState {
             ground_station_service,
             job_service,
             satellite_service,
+            pass_service,
         }
     }
 }
