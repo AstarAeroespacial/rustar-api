@@ -66,7 +66,7 @@ pub struct Job {
     pub commands: Option<Vec<String>>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, ToSchema)]
 pub struct JobStatusUpdate {
     pub job_id: i64,
     pub timestamp: DateTime<Utc>,

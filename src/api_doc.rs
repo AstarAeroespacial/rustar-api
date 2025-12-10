@@ -5,7 +5,7 @@ use utoipa_swagger_ui::SwaggerUi;
 use crate::config::{BrokerConfig, DatabaseConfig, ServerConfig};
 use crate::models::{
     commands::TestMessage,
-    entities::{GroundStation, Job, Satellite},
+    entities::{GroundStation, Job, JobStatusUpdate, Satellite},
     requests::{
         GroundStationCreateRequest, JobCreateRequest, SatelliteCreateRequest, TelemetryQueryParams,
         TleUpdateRequest,
@@ -30,6 +30,7 @@ use crate::models::{
         crate::routes::jobs::create_job,
         crate::routes::jobs::fetch_all_jobs,
         crate::routes::jobs::fetch_job,
+        crate::routes::jobs::fetch_job_status,
         // Satellites
         crate::routes::satellites::fetch_all_satellites,
         crate::routes::satellites::fetch_satellite,
@@ -51,7 +52,8 @@ use crate::models::{
         SatelliteCreateRequest,
         TleUpdateRequest,
         Job,
-        JobCreateRequest
+        JobCreateRequest,
+        JobStatusUpdate
     )),
     tags(
         (name = "Telemetry", description = "Telemetry endpoints"),
