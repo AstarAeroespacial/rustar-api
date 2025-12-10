@@ -22,7 +22,10 @@ impl MessageService {
         let data = serde_json::to_string(&job)
             .map_err(|e| ServiceError::Internal(format!("Failed to serialize job: {}", e)))?;
 
-        self.message_broker.publish(&topic, &data).await?;
+        self.message_broker
+            .publish(&topic, &data)
+            .await
+            .map_err(|e| ServiceError::Internal(format!("Failed to publish to MQTT: {:?}", e)))?;
 
         Ok(())
     }

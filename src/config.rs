@@ -19,6 +19,8 @@ pub struct BrokerConfig {
     pub host: String,
     pub port: u16,
     pub keep_alive: u32,
+    pub username: Option<String>,
+    pub password: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, ToSchema)]
@@ -46,7 +48,10 @@ impl Config {
         if let Ok(port_str) = std::env::var("PORT") {
             if let Ok(port) = port_str.parse::<u16>() {
                 config.server.port = port;
-                println!("PORT environment variable found, overriding server.port to {}", port);
+                println!(
+                    "PORT environment variable found, overriding server.port to {}",
+                    port
+                );
             }
         }
         println!("server.port: {}", config.server.port);
