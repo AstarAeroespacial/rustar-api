@@ -29,6 +29,7 @@ use crate::models::{
         // Jobs
         crate::routes::jobs::create_job,
         crate::routes::jobs::fetch_all_jobs,
+        crate::routes::jobs::fetch_job,
         // Satellites
         crate::routes::satellites::fetch_all_satellites,
         crate::routes::satellites::fetch_satellite,
