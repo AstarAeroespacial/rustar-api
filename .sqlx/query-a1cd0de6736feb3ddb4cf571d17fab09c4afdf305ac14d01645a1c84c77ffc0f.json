@@ -7,8 +7,8 @@
       "Left": [
         "Int8",
         "Timestamptz",
-        "Int8",
-        "Int8",
+        "Text",
+        "Text",
         "Bytea"
       ]
     },

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            INSERT INTO satellites (name, tle, downlink_frequency, uplink_frequency)\n            VALUES ($1, $2, $3, $4)\n            RETURNING id, name, tle, downlink_frequency, uplink_frequency\n            ",
+  "query": "\n            INSERT INTO jobs (gs_id, sat_id, start, \"end\")\n            VALUES ($1, $2, $3, $4)\n            RETURNING id, gs_id, sat_id, start, \"end\"\n            ",
   "describe": {
     "columns": [
       {
@@ -10,31 +10,31 @@
       },
       {
         "ordinal": 1,
-        "name": "name",
+        "name": "gs_id",
         "type_info": "Text"
       },
       {
         "ordinal": 2,
-        "name": "tle",
+        "name": "sat_id",
         "type_info": "Text"
       },
       {
         "ordinal": 3,
-        "name": "downlink_frequency",
-        "type_info": "Float8"
+        "name": "start",
+        "type_info": "Timestamptz"
       },
       {
         "ordinal": 4,
-        "name": "uplink_frequency",
-        "type_info": "Float8"
+        "name": "end",
+        "type_info": "Timestamptz"
       }
     ],
     "parameters": {
       "Left": [
         "Text",
         "Text",
-        "Float8",
-        "Float8"
+        "Timestamptz",
+        "Timestamptz"
       ]
     },
     "nullable": [
@@ -45,5 +45,5 @@
       false
     ]
   },
-  "hash": "06822ee88b2a3a3bad564907eed4e39287238dddf3365e176b2216fc51fac42b"
+  "hash": "b2e198743a8e896b03319cb4453e8968a97727c3c5b8d369452b3395ec3875b7"
 }

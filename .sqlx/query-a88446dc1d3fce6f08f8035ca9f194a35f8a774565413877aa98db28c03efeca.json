@@ -23,6 +23,7 @@
               "Enum": [
                 "Sent",
                 "Received",
+                "Scheduled",
                 "Started",
                 "Completed",
                 "Error"

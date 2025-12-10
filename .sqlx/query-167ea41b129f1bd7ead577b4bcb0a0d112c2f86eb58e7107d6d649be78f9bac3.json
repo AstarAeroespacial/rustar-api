@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            SELECT id, name, latitude, longitude, altitude\n            FROM ground_stations\n            ",
+  "query": "\n            INSERT INTO ground_stations (id, name, latitude, longitude, altitude)\n            VALUES ($1, $2, $3, $4, $5)\n            RETURNING id, name, latitude, longitude, altitude\n            ",
   "describe": {
     "columns": [
       {
@@ -30,7 +30,13 @@
       }
     ],
     "parameters": {
-      "Left": []
+      "Left": [
+        "Text",
+        "Text",
+        "Float8",
+        "Float8",
+        "Int8"
+      ]
     },
     "nullable": [
       false,
@@ -40,5 +46,5 @@
       false
     ]
   },
-  "hash": "612623b4f7a47ea17d03099f1ee9a57620296bfc92472dc59ce9da2120bf71a5"
+  "hash": "167ea41b129f1bd7ead577b4bcb0a0d112c2f86eb58e7107d6d649be78f9bac3"
 }
