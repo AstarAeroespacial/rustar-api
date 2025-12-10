@@ -44,7 +44,10 @@ use std::sync::Arc;
 use tokio::signal;
 use tokio::sync::oneshot;
 
-use crate::routes::ground_stations::delete_ground_station;
+use crate::{
+    repository::job_status_update::JobStatusUpdateRepository,
+    routes::ground_stations::delete_ground_station,
+};
 
 #[derive(OpenApi)]
 #[openapi(
@@ -121,7 +124,7 @@ async fn main() -> std::io::Result<()> {
     let ground_station_service = Arc::new(GroundStationService::new(ground_station_repository));
 
     let job_repository = JobRepository::new(pool.clone());
-    let job_service = Arc::new(JobService::new(job_repository));
+    let job_status_repository = JobStatusUpdateRepository::new(pool.clone());
 
     let satellite_repository = SatelliteRepository::new(pool.clone());
     let satellite_service = Arc::new(SatelliteService::new(satellite_repository));
@@ -134,10 +137,23 @@ async fn main() -> std::io::Result<()> {
         keepalive,
     );
     let client = broker.client();
+
     let messaging_service = Arc::new(MessageService::new(broker));
 
+    let job_service = Arc::new(JobService::new(
+        job_repository,
+        job_status_repository,
+        satellite_service.clone(),
+        messaging_service,
+    ));
+
     // Start MQTT event loop in background
-    let mut recv = MqttReceiver::from_client(client, eventloop, telemetry_service.clone());
+    let mut recv = MqttReceiver::from_client(
+        client,
+        eventloop,
+        telemetry_service.clone(),
+        job_service.clone(),
+    );
 
     println!("============= API SERVER STARTING =============");
     println!("Available endpoints:");
@@ -163,7 +179,7 @@ async fn main() -> std::io::Result<()> {
             // Shared data
             .app_data(web::Data::new(shared_config.clone()))
             .app_data(web::Data::new(telemetry_service.clone()))
-            .app_data(web::Data::new(messaging_service.clone()))
+            // .app_data(web::Data::new(messaging_service.clone()))
             .app_data(web::Data::new(ground_station_service.clone()))
             .app_data(web::Data::new(job_service.clone()))
             .app_data(web::Data::new(satellite_service.clone()))

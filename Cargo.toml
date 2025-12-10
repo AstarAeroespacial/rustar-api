@@ -21,4 +21,5 @@ rumqttc = "0.24.0"
 dotenvy = "0.15.7"
 rustar-types = { git = "https://github.com/AstarAeroespacial/rustar-types", rev = "55fe1cba47b46eb149ab21dbbaba4add9ac423c5" }
 validator = { version = "0.18", features = ["derive"] }
+rustls-native-certs = "0.8.2"
 

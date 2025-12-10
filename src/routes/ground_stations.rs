@@ -26,7 +26,7 @@ pub async fn fetch_all_ground_stations(
     get,
     path = "/api/ground-stations/{id}",
     params(
-        ("id" = i64, Path, description = "ID of the ground station to fetch")
+        ("id" = String, Path, description = "ID of the ground station to fetch")
     ),
     responses(
         (status = 200, description = "Ground station fetched successfully", body = GroundStation),
@@ -37,7 +37,7 @@ pub async fn fetch_all_ground_stations(
 )]
 #[get("/api/ground-stations/{id}")]
 pub async fn fetch_ground_station(
-    id: web::Path<i64>,
+    id: web::Path<String>,
     service: web::Data<Arc<GroundStationService>>,
 ) -> Result<HttpResponse, ServiceError> {
     let id = id.into_inner();
@@ -89,7 +89,7 @@ pub async fn create_ground_station(
     delete,
     path = "/api/ground-stations/{id}",
     params(
-        ("id" = i64, Path, description = "ID of the ground station to delete")
+        ("id" = String, Path, description = "ID of the ground station to delete")
     ),
     responses(
         (status = 204, description = "Ground station deleted successfully, no content returned"),
@@ -100,7 +100,7 @@ pub async fn create_ground_station(
 )]
 #[delete("/api/ground-stations/{id}")]
 pub async fn delete_ground_station(
-    id: web::Path<i64>,
+    id: web::Path<String>,
     service: web::Data<Arc<GroundStationService>>,
 ) -> Result<HttpResponse, ServiceError> {
     let id = id.into_inner();

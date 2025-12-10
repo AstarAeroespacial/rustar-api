@@ -1,6 +1,7 @@
 use crate::models::responses::TelemetryResponse;
 use crate::repository::telemetry::TelemetryRepository;
 use crate::services::errors::ServiceError;
+use chrono::{DateTime, Utc};
 use rustar_types::telemetry::TelemetryRecord;
 
 pub struct TelemetryService {
@@ -10,6 +11,22 @@ pub struct TelemetryService {
 impl TelemetryService {
     pub fn new(repository: TelemetryRepository) -> Self {
         Self { repository }
+    }
+
+    /// Add a new telemetry record to the database
+    pub async fn add_telemetry(
+        &self,
+        timestamp: DateTime<Utc>,
+        sat_id: &str,
+        gs_id: &str,
+        payload: Vec<u8>,
+    ) -> Result<(), ServiceError> {
+        // Insert into the database
+        self.repository
+            .insert_telemetry(timestamp, sat_id, gs_id, payload)
+            .await?;
+
+        Ok(())
     }
 
     /// Get telemetry for a specific satellite by its ID with optional pagination
