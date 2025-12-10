@@ -9,7 +9,7 @@ RUN cargo chef prepare --recipe-path recipe.json
 # build dependencies
 FROM base AS builder
 WORKDIR /app
-# ENV SQLX_OFFLINE=true 
+ENV SQLX_OFFLINE=true 
 COPY --from=planner /app/recipe.json recipe.json
 RUN cargo chef cook --release --recipe-path recipe.json
 # build app
