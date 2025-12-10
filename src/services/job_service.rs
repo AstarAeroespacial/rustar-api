@@ -123,4 +123,12 @@ impl JobService {
         let job = self.repository.get_job(id).await?;
         Ok(job)
     }
+
+    pub async fn get_latest_job_status(
+        &self,
+        job_id: i64,
+    ) -> Result<Option<JobStatusUpdate>, ServiceError> {
+        let status = self.status_repository.get_latest_status(&job_id).await?;
+        Ok(status)
+    }
 }
