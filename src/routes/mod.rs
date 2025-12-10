@@ -7,8 +7,6 @@ pub mod telemetry;
 
 use actix_web::web;
 
-use crate::routes::jobs::fetch_all_jobs;
-
 use self::{
     config::get_config,
     control::send_command,
@@ -16,7 +14,7 @@ use self::{
         create_ground_station, delete_ground_station, fetch_all_ground_stations,
         fetch_ground_station,
     },
-    jobs::create_job,
+    jobs::{create_job, fetch_all_jobs, fetch_job},
     satellites::{
         create_satellite, delete_satellite, fetch_all_satellites, fetch_satellite,
         update_satellite_tle,
@@ -40,6 +38,7 @@ pub fn configure_routes(cfg: &mut web::ServiceConfig) {
         // Jobs
         .service(create_job)
         .service(fetch_all_jobs)
+        .service(fetch_job)
         // Satellites
         .service(fetch_all_satellites)
         .service(fetch_satellite)
