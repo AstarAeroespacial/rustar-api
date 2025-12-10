@@ -1,6 +1,7 @@
 use crate::models::requests::{GroundStationCreateRequest, SatelliteCreateRequest};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, sqlx::Type)]
 #[sqlx(type_name = "job_status", rename_all = "PascalCase")]
@@ -13,7 +14,7 @@ pub enum JobStatus {
     Error,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, ToSchema)]
 pub struct GroundStation {
     pub id: String,
     pub name: String,
@@ -34,7 +35,7 @@ impl GroundStation {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, ToSchema)]
 pub struct Satellite {
     pub id: String,
     pub name: String,
@@ -55,7 +56,7 @@ impl Satellite {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, ToSchema)]
 pub struct Job {
     pub id: i64,
     pub sat_id: String,
