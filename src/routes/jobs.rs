@@ -98,3 +98,29 @@ pub async fn fetch_job(
 
     Ok(HttpResponse::Ok().json(job))
 }
+
+#[utoipa::path(
+    get,
+    path = "/api/jobs/{id}/status",
+    params(
+        ("id" = i64, Path, description = "ID of the job to fetch latest status for")
+    ),
+    responses(
+        (status = 200, description = "Latest job status fetched successfully", body = JobStatusUpdate),
+        (status = 404, description = "Job status not found", body = String),
+        (status = 500, description = "Internal Server Error", body = String)
+    ),
+    tag = "Jobs"
+)]
+#[get("/api/jobs/{id}/status")]
+pub async fn fetch_job_status(
+    id: web::Path<i64>,
+    service: web::Data<Arc<JobService>>,
+) -> Result<HttpResponse, ServiceError> {
+    let job_id = id.into_inner();
+    let status = service
+        .get_latest_job_status(job_id)
+        .await?
+        .ok_or_else(|| ServiceError::NotFound(format!("No status found for job {job_id}")))?;
+    Ok(HttpResponse::Ok().json(status))
+}
