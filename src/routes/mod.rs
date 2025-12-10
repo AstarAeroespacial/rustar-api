@@ -14,7 +14,7 @@ use self::{
         create_ground_station, delete_ground_station, fetch_all_ground_stations,
         fetch_ground_station,
     },
-    jobs::create_job,
+    jobs::{create_job, fetch_all_jobs, fetch_job, fetch_job_status},
     satellites::{
         create_satellite, delete_satellite, fetch_all_satellites, fetch_satellite,
         update_satellite_tle,
@@ -37,6 +37,9 @@ pub fn configure_routes(cfg: &mut web::ServiceConfig) {
         .service(delete_ground_station)
         // Jobs
         .service(create_job)
+        .service(fetch_all_jobs)
+        .service(fetch_job)
+        .service(fetch_job_status)
         // Satellites
         .service(fetch_all_satellites)
         .service(fetch_satellite)

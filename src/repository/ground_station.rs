@@ -19,10 +19,11 @@ impl GroundStationRepository {
         let ground_station = sqlx::query_as!(
             GroundStation,
             r#"
-            INSERT INTO ground_stations (name, latitude, longitude, altitude)
-            VALUES ($1, $2, $3, $4)
+            INSERT INTO ground_stations (id, name, latitude, longitude, altitude)
+            VALUES ($1, $2, $3, $4, $5)
             RETURNING id, name, latitude, longitude, altitude
             "#,
+            ground_station.id,
             ground_station.name,
             ground_station.latitude,
             ground_station.longitude,

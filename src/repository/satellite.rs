@@ -19,10 +19,11 @@ impl SatelliteRepository {
         let satellite = sqlx::query_as!(
             Satellite,
             r#"
-            INSERT INTO satellites (name, tle, downlink_frequency, uplink_frequency)
-            VALUES ($1, $2, $3, $4)
+            INSERT INTO satellites (id, name, tle, downlink_frequency, uplink_frequency)
+            VALUES ($1, $2, $3, $4, $5)
             RETURNING id, name, tle, downlink_frequency, uplink_frequency
             "#,
+            satellite.id,
             satellite.name,
             satellite.tle,
             satellite.downlink_frequency,

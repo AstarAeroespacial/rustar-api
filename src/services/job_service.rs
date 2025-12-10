@@ -113,4 +113,22 @@ impl JobService {
 
         Ok(())
     }
+
+    pub async fn get_all_jobs(&self) -> Result<Vec<Job>, ServiceError> {
+        let jobs = self.repository.get_all_jobs().await?;
+        Ok(jobs)
+    }
+
+    pub async fn get_job(&self, id: i64) -> Result<Option<Job>, ServiceError> {
+        let job = self.repository.get_job(id).await?;
+        Ok(job)
+    }
+
+    pub async fn get_latest_job_status(
+        &self,
+        job_id: i64,
+    ) -> Result<Option<JobStatusUpdate>, ServiceError> {
+        let status = self.status_repository.get_latest_status(&job_id).await?;
+        Ok(status)
+    }
 }

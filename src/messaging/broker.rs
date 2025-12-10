@@ -10,18 +10,16 @@ pub struct MqttBroker {
 }
 
 impl MqttBroker {
-    pub fn new(host: &str, port: u16, keep_alive: Duration) -> (Self, EventLoop) {
-        // let client_id = format!("rustar-api-{}", Uuid::new_v4());
-        // let mut options = MqttOptions::new(client_id, host, port);
-        // options.set_keep_alive(keep_alive);
-        // println!("connecting to broker {}:{}", host, port);
-
-        // let (client, eventloop) = AsyncClient::new(options, 10);
-
+    pub fn new(
+        host: &str,
+        port: u16,
+        keep_alive: Duration,
+        username: Option<&str>,
+        password: Option<&str>,
+    ) -> (Self, EventLoop) {
         let client_id = format!("rustar-api-{}", Uuid::new_v4());
         let mut options = MqttOptions::new(client_id, host, port);
         options.set_keep_alive(keep_alive);
-        println!("connecting to broker {}:{}", host, port);
 
         let mut root_cert_store = tokio_rustls::rustls::RootCertStore::empty();
         root_cert_store.add_parsable_certificates(
@@ -33,7 +31,10 @@ impl MqttBroker {
             .with_no_client_auth();
 
         options.set_transport(Transport::tls_with_config(client_config.into()));
-        options.set_credentials("admin", "Admin123");
+
+        if let (Some(user), Some(pass)) = (username, password) {
+            options.set_credentials(user, pass);
+        }
 
         let (client, eventloop) = AsyncClient::new(options, 10);
 
@@ -55,7 +56,6 @@ impl MqttBroker {
         self.client
             .publish(topic, QoS::AtLeastOnce, false, payload.as_bytes())
             .await?;
-        println!("Published message {} to topic: {}", payload, topic);
         Ok(())
     }
 }

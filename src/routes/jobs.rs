@@ -1,7 +1,7 @@
 use crate::models::entities::JobStatus;
 use crate::models::requests::JobCreateRequest;
 use crate::services::{errors::ServiceError, job_service::JobService};
-use actix_web::{post, web, HttpResponse};
+use actix_web::{get, post, web, HttpResponse};
 use chrono::Utc;
 use std::sync::Arc;
 use validator::Validate;
@@ -13,6 +13,9 @@ use validator::Validate;
     responses(
         (status = 201, description = "Job created successfully", body = Job),
         (status = 400, description = "Bad Request", body = String),
+        (status = 404, description = "Ground Station or Satellite not found", body = String),
+        (status = 409, description = "Conflict", body = String),
+        (status = 422, description = "Unprocessable Entity", body = String),
         (status = 500, description = "Internal Server Error", body = String)
     ),
     tag = "Jobs"
@@ -50,4 +53,74 @@ pub async fn create_job(
         .await?;
 
     Ok(HttpResponse::Created().json(job))
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/jobs",
+    responses(
+        (status = 200, description = "List all jobs", body = [Job]),
+        (status = 500, description = "Internal Server Error", body = String)
+    ),
+    tag = "Jobs"
+)]
+#[get("/api/jobs")]
+pub async fn fetch_all_jobs(
+    service: web::Data<Arc<JobService>>,
+) -> Result<HttpResponse, ServiceError> {
+    let jobs = service.get_all_jobs().await?;
+    Ok(HttpResponse::Ok().json(jobs))
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/jobs/{id}",
+    params(
+        ("id" = i64, Path, description = "ID of the job to fetch")
+    ),
+    responses(
+        (status = 200, description = "Job fetched successfully", body = Jobs),
+        (status = 404, description = "Job not found", body = String),
+        (status = 500, description = "Internal Server Error", body = String)
+    ),
+    tag = "Jobs"
+)]
+#[get("/api/jobs/{id}")]
+pub async fn fetch_job(
+    id: web::Path<i64>,
+    service: web::Data<Arc<JobService>>,
+) -> Result<HttpResponse, ServiceError> {
+    let job_id = id.into_inner();
+    let job = service
+        .get_job(job_id)
+        .await?
+        .ok_or_else(|| ServiceError::NotFound(format!("Job {job_id} not found")))?;
+
+    Ok(HttpResponse::Ok().json(job))
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/jobs/{id}/status",
+    params(
+        ("id" = i64, Path, description = "ID of the job to fetch latest status for")
+    ),
+    responses(
+        (status = 200, description = "Latest job status fetched successfully", body = JobStatusUpdate),
+        (status = 404, description = "Job status not found", body = String),
+        (status = 500, description = "Internal Server Error", body = String)
+    ),
+    tag = "Jobs"
+)]
+#[get("/api/jobs/{id}/status")]
+pub async fn fetch_job_status(
+    id: web::Path<i64>,
+    service: web::Data<Arc<JobService>>,
+) -> Result<HttpResponse, ServiceError> {
+    let job_id = id.into_inner();
+    let status = service
+        .get_latest_job_status(job_id)
+        .await?
+        .ok_or_else(|| ServiceError::NotFound(format!("No status found for job {job_id}")))?;
+    Ok(HttpResponse::Ok().json(status))
 }

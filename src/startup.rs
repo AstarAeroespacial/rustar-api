@@ -44,7 +44,27 @@ pub async fn init_app_state(config: Arc<Config>) -> AppState {
 
     // Setup MQTT broker & messaging service
     let keepalive = std::time::Duration::from_secs(config.broker.keep_alive as u64);
-    let (broker, _) = MqttBroker::new(&config.broker.host, config.broker.port, keepalive);
+    let (broker, mut eventloop) = MqttBroker::new(
+        &config.broker.host,
+        config.broker.port,
+        keepalive,
+        config.broker.username.as_deref(),
+        config.broker.password.as_deref(),
+    );
+
+    // Spawn a task to run the MQTT eventloop
+    tokio::spawn(async move {
+        loop {
+            match eventloop.poll().await {
+                Ok(_) => {}
+                Err(e) => {
+                    eprintln!("MQTT eventloop error: {:?}", e);
+                    tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+                }
+            }
+        }
+    });
+
     let messaging_service = Arc::new(MessageService::new(broker));
 
     // Initialize job service with all dependencies
@@ -71,7 +91,13 @@ pub fn init_mqtt_receiver(
     job_service: Arc<JobService>,
 ) -> MqttReceiver {
     let keepalive = std::time::Duration::from_secs(config.broker.keep_alive as u64);
-    let (broker, eventloop) = MqttBroker::new(&config.broker.host, config.broker.port, keepalive);
+    let (broker, eventloop) = MqttBroker::new(
+        &config.broker.host,
+        config.broker.port,
+        keepalive,
+        config.broker.username.as_deref(),
+        config.broker.password.as_deref(),
+    );
     let client = broker.client();
 
     MqttReceiver::from_client(client, eventloop, telemetry_service, job_service)
