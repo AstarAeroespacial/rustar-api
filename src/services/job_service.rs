@@ -113,4 +113,9 @@ impl JobService {
 
         Ok(())
     }
+
+    pub async fn get_all_jobs(&self) -> Result<Vec<Job>, ServiceError> {
+        let jobs = self.repository.get_all_jobs().await?;
+        Ok(jobs)
+    }
 }
