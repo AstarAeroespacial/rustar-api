@@ -22,4 +22,5 @@ dotenvy = "0.15.7"
 rustar-types = { git = "https://github.com/AstarAeroespacial/rustar-types"}
 validator = { version = "0.18", features = ["derive"] }
 rustls-native-certs = "0.8.2"
+tracking ={ git = "https://github.com/AstarAeroespacial/rustar-tracking"}
 
