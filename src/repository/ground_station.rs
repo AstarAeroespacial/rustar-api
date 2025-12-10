@@ -2,6 +2,7 @@ use crate::models::entities::GroundStation;
 use crate::repository::errors::RepositoryError;
 use sqlx::{Pool, Postgres};
 
+#[derive(Clone)]
 pub struct GroundStationRepository {
     pool: Pool<Postgres>,
 }

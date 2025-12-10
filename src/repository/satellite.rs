@@ -2,6 +2,7 @@ use crate::models::entities::Satellite;
 use crate::repository::errors::RepositoryError;
 use sqlx::{Pool, Postgres};
 
+#[derive(Clone)]
 pub struct SatelliteRepository {
     pool: Pool<Postgres>,
 }
