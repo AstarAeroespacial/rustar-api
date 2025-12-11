@@ -21,6 +21,7 @@ pub fn configure_app(
         .app_data(web::Data::new(app_state.ground_station_service.clone()))
         .app_data(web::Data::new(app_state.job_service.clone()))
         .app_data(web::Data::new(app_state.satellite_service.clone()))
+        .app_data(web::Data::new(app_state.pass_service.clone()))
         .configure(routes::configure_routes)
         .configure(api_doc::configure_swagger)
         .wrap(Logger::new("%r - %U | %s (%T)"))
