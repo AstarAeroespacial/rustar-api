@@ -41,22 +41,36 @@ impl TelemetryService {
             .get_telemetry_by_satellite(satellite_id, limit, page)
             .await?;
 
-        // Convert TelemetryDb to TelemetryResponse
-        let responses: Result<Vec<TelemetryResponse>, ServiceError> = telemetry
+        // Convert TelemetryDb to TelemetryResponse, filtering out invalid records
+        let responses: Vec<TelemetryResponse> = telemetry
             .into_iter()
-            .map(|db_record| {
+            .filter_map(|db_record| {
                 // Decode the payload bytes to TelemetryRecord
-                let telemetry_record = if let Some(payload_bytes) = db_record.payload {
-                    serde_json::from_slice::<TelemetryRecord>(&payload_bytes)
-                        .map_err(|e| ServiceError::DeserializationError(e.to_string()))?
-                } else {
-                    return Err(ServiceError::DeserializationError(
-                        "Missing telemetry payload".to_string(),
-                    ));
+                let telemetry_record = match db_record.payload {
+                    Some(payload_bytes) => {
+                        match serde_json::from_slice::<TelemetryRecord>(&payload_bytes) {
+                            Ok(record) => record,
+                            Err(e) => {
+                                // Log the error but don't fail the entire request
+                                eprintln!(
+                                    "Warning: Failed to deserialize telemetry record {}: {}",
+                                    db_record.id, e
+                                );
+                                return None;
+                            }
+                        }
+                    }
+                    None => {
+                        eprintln!(
+                            "Warning: Missing payload for telemetry record {}",
+                            db_record.id
+                        );
+                        return None;
+                    }
                 };
 
                 // Convert to TelemetryResponse
-                Ok(TelemetryResponse {
+                Some(TelemetryResponse {
                     id: db_record.id,
                     timestamp: db_record.timestamp.timestamp(),
                     temperature: telemetry_record.temperature,
@@ -67,6 +81,6 @@ impl TelemetryService {
             })
             .collect();
 
-        responses
+        Ok(responses)
     }
 }
