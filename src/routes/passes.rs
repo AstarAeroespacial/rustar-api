@@ -1,13 +1,15 @@
+use crate::models::requests::PassesQueryParams;
 use crate::models::responses::SatellitePassesResponse;
 use crate::services::{errors::ServiceError, pass_service::PassService};
 use actix_web::{get, web, HttpResponse};
 use std::sync::Arc;
 
-/* #[utoipa::path(
+#[utoipa::path(
     get,
     path = "/api/satellites/{id}/passes",
     params(
-        ("id" = String, Path, description = "ID of the satellite")
+        ("id" = String, Path, description = "ID of the satellite"),
+        PassesQueryParams
     ),
     responses(
         (status = 200, description = "List of upcoming passes for all ground stations", body = SatellitePassesResponse),
@@ -19,11 +21,14 @@ use std::sync::Arc;
 #[get("/api/satellites/{id}/passes")]
 pub async fn get_satellite_passes(
     sat_id: web::Path<String>,
+    query: web::Query<PassesQueryParams>,
     service: web::Data<Arc<PassService>>,
 ) -> Result<HttpResponse, ServiceError> {
     let sat_id = sat_id.into_inner();
 
-    let passes = service.get_satellite_passes(&sat_id).await?;
+    let passes = service
+        .get_satellite_passes(&sat_id, query.start, query.end)
+        .await?;
 
     Ok(HttpResponse::Ok().json(SatellitePassesResponse { passes }))
-} */
+}

@@ -2,6 +2,7 @@ pub mod config;
 pub mod control;
 pub mod ground_stations;
 pub mod jobs;
+pub mod passes;
 pub mod satellites;
 pub mod telemetry;
 
@@ -15,6 +16,7 @@ use self::{
         fetch_ground_station,
     },
     jobs::{create_job, fetch_all_jobs, fetch_job, fetch_job_status},
+    passes::get_satellite_passes,
     satellites::{
         create_satellite, delete_satellite, fetch_all_satellites, fetch_satellite,
         update_satellite_tle,
@@ -45,5 +47,7 @@ pub fn configure_routes(cfg: &mut web::ServiceConfig) {
         .service(fetch_satellite)
         .service(create_satellite)
         .service(update_satellite_tle)
-        .service(delete_satellite);
+        .service(delete_satellite)
+        // Passes
+        .service(get_satellite_passes);
 }
