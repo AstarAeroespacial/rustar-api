@@ -1,5 +1,29 @@
+use chrono::{DateTime, Utc};
 use serde::Serialize;
 use utoipa::ToSchema;
+
+#[derive(ToSchema, Debug, Serialize)]
+#[schema(example = json!({
+    "gs_id": "gs-001",
+    "aos": "2025-12-10T12:00:00Z",
+    "los": "2025-12-10T12:15:00Z",
+    "max_elevation": 45.5
+}))]
+pub struct PassInfo {
+    #[schema(example = "gs-001")]
+    pub gs_id: String,
+    #[schema(value_type = String, example = "2025-12-10T12:00:00Z")]
+    pub aos: DateTime<Utc>,
+    #[schema(value_type = String, example = "2025-12-10T12:15:00Z")]
+    pub los: DateTime<Utc>,
+    #[schema(example = 45.5)]
+    pub max_elevation: f64,
+}
+
+#[derive(ToSchema, Debug, Serialize)]
+pub struct SatellitePassesResponse {
+    pub passes: Vec<PassInfo>,
+}
 
 #[derive(ToSchema, Debug, Serialize)]
 #[schema(example = json!({
