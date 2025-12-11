@@ -16,7 +16,7 @@ use self::{
         fetch_ground_station,
     },
     jobs::{create_job, fetch_all_jobs, fetch_job, fetch_job_status},
-    passes::get_satellite_passes,
+    passes::{get_ground_station_passes, get_satellite_passes},
     satellites::{
         create_satellite, delete_satellite, fetch_all_satellites, fetch_satellite,
         update_satellite_tle,
@@ -49,5 +49,6 @@ pub fn configure_routes(cfg: &mut web::ServiceConfig) {
         .service(update_satellite_tle)
         .service(delete_satellite)
         // Passes
-        .service(get_satellite_passes);
+        .service(get_satellite_passes)
+        .service(get_ground_station_passes);
 }
