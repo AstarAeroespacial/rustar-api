@@ -7,8 +7,8 @@ use crate::repository::errors::RepositoryError;
 pub struct TelemetryDb {
     pub id: i64,
     pub timestamp: DateTime<Utc>,
-    pub sat_id: i64,
-    pub gs_id: i64,
+    pub sat_id: String,
+    pub gs_id: String,
     pub payload: Option<Vec<u8>>,
 }
 
@@ -50,7 +50,7 @@ impl TelemetryRepository {
     /// Fetch telemetry records for a specific satellite with optional pagination
     pub async fn get_telemetry_by_satellite(
         &self,
-        satellite_id: &i64,
+        satellite_id: &String,
         limit: Option<i64>,
         page: Option<i64>,
     ) -> Result<Vec<TelemetryDb>, RepositoryError> {

@@ -8,7 +8,7 @@ use validator::Validate;
     get,
     path = "/api/satellites/{id}/telemetry",
     params(
-        ("id" = i64, Path, description = "ID of the satellite to fetch telemetry for"),
+        ("id" = String, Path, description = "ID of the satellite to fetch telemetry for"),
         TelemetryQueryParams
     ),
     responses(
@@ -22,7 +22,7 @@ use validator::Validate;
 )]
 #[get("/api/satellites/{id}/telemetry")]
 pub async fn fetch_satellite_telemetry(
-    id: web::Path<i64>,
+    id: web::Path<String>,
     query: web::Query<TelemetryQueryParams>,
     service: web::Data<Arc<TelemetryService>>,
 ) -> Result<HttpResponse, ServiceError> {

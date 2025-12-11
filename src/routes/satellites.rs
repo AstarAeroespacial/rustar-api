@@ -26,7 +26,7 @@ pub async fn fetch_all_satellites(
     get,
     path = "/api/satellites/{id}",
     params(
-        ("id" = i64, Path, description = "ID of the satellite to fetch")
+        ("id" = String, Path, description = "ID of the satellite to fetch")
     ),
     responses(
         (status = 200, description = "Satellite fetched successfully", body = Satellite),
@@ -129,7 +129,7 @@ pub async fn create_satellite(
     delete,
     path = "/api/satellites/{id}",
     params(
-        ("id" = i64, Path, description = "ID of the satellite to delete")
+        ("id" = String, Path, description = "ID of the satellite to delete")
     ),
     responses(
         (status = 204, description = "Satellite deleted successfully, no content returned"),

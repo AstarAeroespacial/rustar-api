@@ -32,7 +32,7 @@ impl TelemetryService {
     /// Get telemetry for a specific satellite by its ID with optional pagination
     pub async fn get_telemetry_by_satellite_id(
         &self,
-        satellite_id: &i64,
+        satellite_id: &String,
         limit: Option<i64>,
         page: Option<i64>,
     ) -> Result<Vec<TelemetryResponse>, ServiceError> {
