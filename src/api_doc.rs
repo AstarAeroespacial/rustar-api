@@ -7,8 +7,8 @@ use crate::models::{
     commands::TestMessage,
     entities::{GroundStation, Job, JobStatusUpdate, Satellite},
     requests::{
-        GroundStationCreateRequest, JobCreateRequest, SatelliteCreateRequest, TelemetryQueryParams,
-        TleUpdateRequest,
+        GroundStationCreateRequest, JobCreateRequest, PassesQueryParams, SatelliteCreateRequest,
+        TelemetryQueryParams, TleUpdateRequest,
     },
     responses::*,
 };
@@ -37,6 +37,9 @@ use crate::models::{
         crate::routes::satellites::create_satellite,
         crate::routes::satellites::update_satellite_tle,
         crate::routes::satellites::delete_satellite,
+        // Passes
+        crate::routes::passes::get_satellite_passes,
+        crate::routes::passes::get_ground_station_passes,
     ),
     components(schemas(
         TelemetryResponse,
@@ -53,14 +56,19 @@ use crate::models::{
         TleUpdateRequest,
         Job,
         JobCreateRequest,
-        JobStatusUpdate
+        JobStatusUpdate,
+        PassInfo,
+        SatellitePassesResponse,
+        crate::routes::passes::GroundStationPassesResponse,
+        PassesQueryParams
     )),
     tags(
         (name = "Telemetry", description = "Telemetry endpoints"),
         (name = "Config", description = "Configuration endpoints"),
         (name = "Ground Stations", description = "Ground station management"),
         (name = "Jobs", description = "Job management"),
-        (name = "Satellites", description = "Satellite management endpoints")
+        (name = "Satellites", description = "Satellite management endpoints"),
+        (name = "Passes", description = "Satellite pass predictions")
     ),
     info(
         title = "Rustar API",

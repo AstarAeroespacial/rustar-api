@@ -9,8 +9,8 @@ use crate::{
     },
     services::{
         ground_station_service::GroundStationService, job_service::JobService,
-        message_service::MessageService, satellite_service::SatelliteService,
-        telemetry_service::TelemetryService,
+        message_service::MessageService, pass_service::PassService,
+        satellite_service::SatelliteService, telemetry_service::TelemetryService,
     },
     state::AppState,
 };
@@ -33,14 +33,20 @@ pub async fn init_app_state(config: Arc<Config>) -> AppState {
     // Initialize repositories
     let telemetry_repository = TelemetryRepository::new(pool.clone());
     let ground_station_repository = GroundStationRepository::new(pool.clone());
+    let ground_station_repository2 = GroundStationRepository::new(pool.clone());
     let job_repository = JobRepository::new(pool.clone());
     let job_status_repository = JobStatusUpdateRepository::new(pool.clone());
     let satellite_repository = SatelliteRepository::new(pool.clone());
+    let satellite_repository2 = SatelliteRepository::new(pool.clone());
 
     // Initialize services
     let telemetry_service = Arc::new(TelemetryService::new(telemetry_repository));
     let ground_station_service = Arc::new(GroundStationService::new(ground_station_repository));
     let satellite_service = Arc::new(SatelliteService::new(satellite_repository));
+    let pass_service = Arc::new(PassService::new(
+        satellite_repository2,
+        ground_station_repository2,
+    ));
 
     // Setup MQTT broker & messaging service
     let keepalive = std::time::Duration::from_secs(config.broker.keep_alive as u64);
@@ -81,6 +87,7 @@ pub async fn init_app_state(config: Arc<Config>) -> AppState {
         ground_station_service,
         job_service,
         satellite_service,
+        pass_service,
     )
 }
 
