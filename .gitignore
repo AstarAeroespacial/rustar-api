@@ -16,7 +16,7 @@
 
 .env
 *.cvs
-
+*.csv
 
 # local development data
 .data
