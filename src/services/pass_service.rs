@@ -36,13 +36,16 @@ impl PassService {
             .await?
             .ok_or_else(|| ServiceError::NotFound(format!("Satellite {} not found", sat_id)))?;
 
-        // Parse TLE
+        // Parse TLE - prepend satellite name to create 3-line format
         let tle_lines: Vec<&str> = satellite.tle.lines().collect();
-        if tle_lines.len() < 3 {
+        if tle_lines.len() < 2 {
             return Err(ServiceError::BadRequest(
-                "Invalid TLE format: expected 3 lines (name, line1, line2)".to_string(),
+                "Invalid TLE format: expected 2 lines (line1, line2)".to_string(),
             ));
         }
+
+        // Create 3-line TLE format: name\nline1\nline2
+        let tle_with_name = format!("{}\n{}", satellite.name, satellite.tle);
 
         // Get all ground stations
         let ground_stations = self
@@ -63,10 +66,11 @@ impl PassService {
             let observer = Observer::new(gs.latitude, gs.longitude, gs.altitude as f64);
 
             // Parse TLE for each ground station
+            let tle_lines_with_name: Vec<&str> = tle_with_name.lines().collect();
             let gs_elements = match Elements::from_tle(
-                Some(tle_lines[0].to_string()),
-                tle_lines[1].as_bytes(),
-                tle_lines[2].as_bytes(),
+                Some(tle_lines_with_name[0].to_string()),
+                tle_lines_with_name[1].as_bytes(),
+                tle_lines_with_name[2].as_bytes(),
             ) {
                 Ok(e) => e,
                 Err(e) => {
@@ -149,20 +153,24 @@ impl PassService {
         );
 
         for satellite in satellites {
-            // Parse TLE
+            // Parse TLE - prepend satellite name to create 3-line format
             let tle_lines: Vec<&str> = satellite.tle.lines().collect();
-            if tle_lines.len() < 3 {
+            if tle_lines.len() < 2 {
                 log::warn!(
-                    "Invalid TLE format for satellite {}: expected 3 lines",
+                    "Invalid TLE format for satellite {}: expected 2 lines",
                     satellite.id
                 );
                 continue;
             }
 
+            // Create 3-line TLE format: name\nline1\nline2
+            let tle_with_name = format!("{}\n{}", satellite.name, satellite.tle);
+            let tle_lines_with_name: Vec<&str> = tle_with_name.lines().collect();
+
             let sat_elements = match Elements::from_tle(
-                Some(tle_lines[0].to_string()),
-                tle_lines[1].as_bytes(),
-                tle_lines[2].as_bytes(),
+                Some(tle_lines_with_name[0].to_string()),
+                tle_lines_with_name[1].as_bytes(),
+                tle_lines_with_name[2].as_bytes(),
             ) {
                 Ok(e) => e,
                 Err(e) => {
