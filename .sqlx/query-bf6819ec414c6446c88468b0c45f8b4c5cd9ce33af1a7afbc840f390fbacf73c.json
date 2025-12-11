@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            SELECT id, timestamp, sat_id, gs_id, payload\n            FROM telemetry\n            WHERE sat_id = $1\n            ORDER BY timestamp DESC\n            ",
+  "query": "\n            SELECT id, gs_id, sat_id, start, \"end\"\n            FROM jobs\n            WHERE id = $1\n            ",
   "describe": {
     "columns": [
       {
@@ -10,23 +10,23 @@
       },
       {
         "ordinal": 1,
-        "name": "timestamp",
-        "type_info": "Timestamptz"
+        "name": "gs_id",
+        "type_info": "Text"
       },
       {
         "ordinal": 2,
         "name": "sat_id",
-        "type_info": "Int8"
+        "type_info": "Text"
       },
       {
         "ordinal": 3,
-        "name": "gs_id",
-        "type_info": "Int8"
+        "name": "start",
+        "type_info": "Timestamptz"
       },
       {
         "ordinal": 4,
-        "name": "payload",
-        "type_info": "Bytea"
+        "name": "end",
+        "type_info": "Timestamptz"
       }
     ],
     "parameters": {
@@ -39,8 +39,8 @@
       false,
       false,
       false,
-      true
+      false
     ]
   },
-  "hash": "e73c766294de555a73480882b5861506ac7bb6bf67fd2cfeb05084ef1b48e9b2"
+  "hash": "bf6819ec414c6446c88468b0c45f8b4c5cd9ce33af1a7afbc840f390fbacf73c"
 }
