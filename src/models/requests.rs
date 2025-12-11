@@ -3,6 +3,14 @@ use serde::Deserialize;
 use utoipa::{IntoParams, ToSchema};
 
 use validator::Validate;
+
+#[derive(Debug, Deserialize, IntoParams)]
+pub struct PassesQueryParams {
+    #[param(example = "2025-12-10T00:00:00Z")]
+    pub start: DateTime<Utc>,
+    #[param(example = "2025-12-17T23:59:59Z")]
+    pub end: DateTime<Utc>,
+}
 #[derive(ToSchema, Debug, Deserialize, Validate)]
 #[schema(example = json!({
     "id": "gs-001",
