@@ -3,7 +3,7 @@ use crate::{
     repository::{ground_station::GroundStationRepository, satellite::SatelliteRepository},
     services::errors::ServiceError,
 };
-use chrono::{DateTime, Duration, Utc};
+use chrono::{DateTime, Utc};
 use tracking::{Elements, Observer, Tracker};
 
 pub struct PassService {
@@ -80,31 +80,25 @@ impl PassService {
                     // Get all passes within the time window using next_passes
                     if let Some(passes) = tracker.next_passes(start, window) {
                         for pass in passes.passes {
-                            if let (Some(aos), Some(los)) = (pass.aos, pass.los) {
+                            if let (Some(aos), Some(los), Some(max_elevation)) =
+                                (pass.aos, pass.los, pass.max_elevation)
+                            {
                                 let aos_time =
                                     DateTime::from_timestamp(aos.time as i64, 0).unwrap_or(start);
                                 let los_time =
                                     DateTime::from_timestamp(los.time as i64, 0).unwrap_or(start);
 
-                                // Calculate max elevation during the pass
-                                let mut max_elevation = 0.0;
-                                let mut check_time = aos_time;
-                                while check_time <= los_time {
-                                    if let Ok(observation) = tracker.track(check_time) {
-                                        if observation.elevation > max_elevation {
-                                            max_elevation = observation.elevation;
-                                        }
-                                    }
-                                    check_time = check_time + Duration::seconds(30);
-                                }
+                                // Convert max_elevation from radians to degrees
+                                let max_elevation_deg = max_elevation.to_degrees();
 
                                 // Only include passes with elevation >= 10 degrees
-                                if max_elevation >= 10.0 {
+                                if max_elevation_deg >= 10.0 {
                                     all_passes.push(PassInfo {
                                         gs_id: gs.id.clone(),
+                                        sat_id: satellite.id.clone(),
                                         aos: aos_time,
                                         los: los_time,
-                                        max_elevation,
+                                        max_elevation: max_elevation_deg,
                                     });
                                 }
                             }
@@ -113,6 +107,106 @@ impl PassService {
                 }
                 Err(e) => {
                     log::error!("Error creating tracker for GS {}: {:?}", gs.id, e);
+                }
+            }
+        }
+
+        // Sort by AOS time
+        all_passes.sort_by(|a, b| a.aos.cmp(&b.aos));
+
+        Ok(all_passes)
+    }
+
+    /// Get upcoming passes for all satellites visible from a specific ground station
+    pub async fn get_ground_station_passes(
+        &self,
+        gs_id: &str,
+        start: DateTime<Utc>,
+        end: DateTime<Utc>,
+    ) -> Result<Vec<PassInfo>, ServiceError> {
+        // Get ground station
+        let ground_station = self
+            .ground_station_repository
+            .get_ground_station(gs_id)
+            .await?
+            .ok_or_else(|| ServiceError::NotFound(format!("Ground station {} not found", gs_id)))?;
+
+        // Get all satellites
+        let satellites = self.satellite_repository.get_all_satellites().await?;
+
+        if satellites.is_empty() {
+            return Ok(Vec::new());
+        }
+
+        // Calculate passes for each satellite
+        let mut all_passes = Vec::new();
+        let duration = end.signed_duration_since(start);
+        let window = std::time::Duration::from_secs(duration.num_seconds() as u64);
+        let observer = Observer::new(
+            ground_station.latitude,
+            ground_station.longitude,
+            ground_station.altitude as f64,
+        );
+
+        for satellite in satellites {
+            // Parse TLE
+            let tle_lines: Vec<&str> = satellite.tle.lines().collect();
+            if tle_lines.len() < 3 {
+                log::warn!(
+                    "Invalid TLE format for satellite {}: expected 3 lines",
+                    satellite.id
+                );
+                continue;
+            }
+
+            let sat_elements = match Elements::from_tle(
+                Some(tle_lines[0].to_string()),
+                tle_lines[1].as_bytes(),
+                tle_lines[2].as_bytes(),
+            ) {
+                Ok(e) => e,
+                Err(e) => {
+                    log::error!("Error parsing TLE for satellite {}: {:?}", satellite.id, e);
+                    continue;
+                }
+            };
+
+            match Tracker::new(&observer, sat_elements) {
+                Ok(tracker) => {
+                    // Get all passes within the time window
+                    if let Some(passes) = tracker.next_passes(start, window) {
+                        for pass in passes.passes {
+                            if let (Some(aos), Some(los), Some(max_elevation)) =
+                                (pass.aos, pass.los, pass.max_elevation)
+                            {
+                                let aos_time =
+                                    DateTime::from_timestamp(aos.time as i64, 0).unwrap_or(start);
+                                let los_time =
+                                    DateTime::from_timestamp(los.time as i64, 0).unwrap_or(start);
+
+                                // Convert max_elevation from radians to degrees
+                                let max_elevation_deg = max_elevation.to_degrees();
+
+                                // Only include passes with elevation >= 10 degrees
+                                if max_elevation_deg >= 10.0 {
+                                    all_passes.push(PassInfo {
+                                        gs_id: ground_station.id.clone(),
+                                        sat_id: satellite.id.clone(),
+                                        aos: aos_time,
+                                        los: los_time,
+                                        max_elevation: max_elevation_deg,
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+                Err(e) => {
+                    log::error!(
+                        "Error creating tracker for satellite {}: {:?}",
+                        satellite.id,
+                        e
+                    );
                 }
             }
         }
