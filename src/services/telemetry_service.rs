@@ -57,6 +57,7 @@ impl TelemetryService {
 
                 // Convert to TelemetryResponse
                 Ok(TelemetryResponse {
+                    id: db_record.id,
                     timestamp: db_record.timestamp.timestamp(),
                     temperature: telemetry_record.temperature,
                     voltage: telemetry_record.voltage,

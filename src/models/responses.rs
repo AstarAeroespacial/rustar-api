@@ -37,6 +37,8 @@ pub struct SatellitePassesResponse {
     "battery_level": 85
 }))]
 pub struct TelemetryResponse {
+    #[schema(example = 12345)]
+    pub id: i64,
     #[schema(example = 1702219200)]
     pub timestamp: i64, // ISO timestamp
     #[schema(example = 25.5)]
