@@ -46,11 +46,11 @@ pub async fn create_job(
         )
         .await?;
 
-    service.send_job(&job).await?;
-
     service
         .add_job_status(job.id, JobStatus::Sent, Utc::now())
         .await?;
+
+    service.send_job(&job).await?;
 
     Ok(HttpResponse::Created().json(job))
 }
