@@ -36,7 +36,7 @@ impl MqttBroker {
             options.set_credentials(user, pass);
         }
 
-        let (client, eventloop) = AsyncClient::new(options, 10);
+        let (client, eventloop) = AsyncClient::new(options, 100);
 
         (Self { client }, eventloop)
     }
