@@ -25,9 +25,9 @@ impl MqttBroker {
         
         root_cert_store.extend(webpki_roots::TLS_SERVER_ROOTS.iter().cloned());
         
-        if let Ok(native_certs) = rustls_native_certs::load_native_certs() {
-            root_cert_store.add_parsable_certificates(native_certs);
-        }
+        // Add native certs as well
+        let native_certs = rustls_native_certs::load_native_certs();
+        root_cert_store.add_parsable_certificates(native_certs);
 
         let client_config = ClientConfig::builder()
             .with_root_certificates(root_cert_store)
