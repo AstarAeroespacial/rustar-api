@@ -17,7 +17,7 @@ impl MessageService {
     }
 
     pub async fn send_job(&self, gs_id: String, job: Job) -> Result<(), ServiceError> {
-        let topic = format!("gs/{}/job", gs_id);
+        let topic = format!("gs/{}/jobs", gs_id);
 
         let data = serde_json::to_string(&job)
             .map_err(|e| ServiceError::Internal(format!("Failed to serialize job: {}", e)))?;
