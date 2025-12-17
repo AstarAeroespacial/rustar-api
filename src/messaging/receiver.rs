@@ -190,7 +190,7 @@ impl MqttReceiver {
                     // println!("Incoming event: {:?}", pk)
                 }
             }
-            Outgoing(ev) => {
+            Outgoing(_ev) => {
                 // println!("Outgoing event: {:?}", ev)
             }
         }
