@@ -22,3 +22,5 @@
 .data
 mosquitto/data/*
 mosquitto/log/*
+
+.vscode/settings.json
