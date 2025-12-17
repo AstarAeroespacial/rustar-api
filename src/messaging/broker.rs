@@ -27,7 +27,7 @@ impl MqttBroker {
         
         // Add native certs as well
         let native_certs = rustls_native_certs::load_native_certs();
-        root_cert_store.add_parsable_certificates(native_certs);
+        root_cert_store.add_parsable_certificates(native_certs.certs);
 
         let client_config = ClientConfig::builder()
             .with_root_certificates(root_cert_store)
