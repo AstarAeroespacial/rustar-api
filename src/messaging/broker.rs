@@ -22,9 +22,12 @@ impl MqttBroker {
         options.set_keep_alive(keep_alive);
 
         let mut root_cert_store = tokio_rustls::rustls::RootCertStore::empty();
-        root_cert_store.add_parsable_certificates(
-            rustls_native_certs::load_native_certs().expect("could not load platform certs"),
-        );
+        
+        root_cert_store.extend(webpki_roots::TLS_SERVER_ROOTS.iter().cloned());
+        
+        if let Ok(native_certs) = rustls_native_certs::load_native_certs() {
+            root_cert_store.add_parsable_certificates(native_certs);
+        }
 
         let client_config = ClientConfig::builder()
             .with_root_certificates(root_cert_store)
