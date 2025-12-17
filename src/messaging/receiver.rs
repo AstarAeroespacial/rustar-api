@@ -160,17 +160,26 @@ impl MqttReceiver {
                                 rustar_types::jobs::JobStatusUpdate,
                             >(&msg.payload)
                             {
-                                let _ = self
+                                match self
                                     .job_service
                                     .add_job_status(
                                         job_id,
                                         status_update.status.into(),
                                         status_update.timestamp,
                                     )
-                                    .await;
+                                    .await
+                                {
+                                    Ok(_) => {}
+
+                                    Err(e) => {
+                                        eprintln!(
+                                            "Error storing job status update for job {}: {:?}",
+                                            job_id, e
+                                        );
+                                    }
+                                }
                             } else {
                                 eprintln!("Failed to parse job status update for job {}", job_id);
-                                eprintln!("Payload: {}", String::from_utf8_lossy(&msg.payload));
                             }
                         }
                         topic => {
