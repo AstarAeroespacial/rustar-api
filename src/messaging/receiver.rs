@@ -168,6 +168,9 @@ impl MqttReceiver {
                                         status_update.timestamp,
                                     )
                                     .await;
+                            } else {
+                                eprintln!("Failed to parse job status update for job {}", job_id);
+                                eprintln!("Payload: {}", String::from_utf8_lossy(&msg.payload));
                             }
                         }
                         topic => {
